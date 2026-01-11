@@ -292,20 +292,22 @@ export default function Calculator() {
     // POOL
     if (system === 'pool') {
       const xxlKg = totalM2 * 2 * sys.mikrocementek!.xxl.kgPerM2;
-      const xxlPieces = Math.ceil(xxlKg / sys.mikrocementek!.xxl.options[0].kg!);
+      const xxlOptions = sys.mikrocementek!.xxl.options || [];
+      const xxlPieces = xxlOptions[0]?.kg ? Math.ceil(xxlKg / xxlOptions[0].kg) : 0;
       res.items.push({
         cat: 'Aquaciment XXL (2 réteg)',
-        pkgs: [{...sys.mikrocementek!.xxl.options[0], qty: xxlPieces, name: 'Aquaciment XXL 18kg'}],
-        price: sys.mikrocementek!.xxl.options[0].price * xxlPieces
+        pkgs: xxlOptions[0] ? [{...xxlOptions[0], qty: xxlPieces, name: 'Aquaciment XXL 18kg'}] : [],
+        price: xxlOptions[0] ? xxlOptions[0].price * xxlPieces : 0
       });
       res.layers.push('2× XXL');
       
       const xlKg = totalM2 * 1 * sys.mikrocementek!.xl.kgPerM2;
-      const xlPieces = Math.ceil(xlKg / sys.mikrocementek!.xl.options[0].kg!);
+      const xlOptions = sys.mikrocementek!.xl.options || [];
+      const xlPieces = xlOptions[0]?.kg ? Math.ceil(xlKg / xlOptions[0].kg) : 0;
       res.items.push({
         cat: 'Aquaciment XL (1 réteg)',
-        pkgs: [{...sys.mikrocementek!.xl.options[0], qty: xlPieces, name: 'Aquaciment XL 18kg'}],
-        price: sys.mikrocementek!.xl.options[0].price * xlPieces
+        pkgs: xlOptions[0] ? [{...xlOptions[0], qty: xlPieces, name: 'Aquaciment XL 18kg'}] : [],
+        price: xlOptions[0] ? xlOptions[0].price * xlPieces : 0
       });
       res.layers.push('1× XL');
       

@@ -1,5 +1,3 @@
-// Mikrocement rendszerek típusai
-
 export type MikrocementSystem = 'natture' | 'effectoQuartz' | 'effectoPU' | 'pool';
 
 export interface ProductOption {
@@ -13,22 +11,23 @@ export interface ProductOption {
 
 export interface AlapozoProduct {
   name: string;
+  info?: string;
   options: ProductOption[];
-  info: string;
 }
 
 export interface MikrocementProduct {
   name: string;
   kgPerM2: number;
   literPerKg?: number;
-  info: string;
+  info?: string;
+  options?: ProductOption[];
 }
 
 export interface LakkProduct {
   name: string;
-  options: ProductOption[];
+  info?: string;
   needPresealer?: boolean;
-  info: string;
+  options: ProductOption[];
 }
 
 export interface Surface {
@@ -62,15 +61,30 @@ export interface CalculationResult {
 }
 
 export interface SystemProducts {
-  name: string;
-  alapozok: Record<string, AlapozoProduct>;
-  lakkok: Record<string, LakkProduct>;
+name?: string;  
+alapozok: Record<string, AlapozoProduct>;
+  halo?: ProductOption[];
   mikrocementek?: Record<string, MikrocementProduct>;
   mikroOptions?: Record<string, ProductOption[]>;
-  halo?: ProductOption[];
   gyanta?: ProductOption[];
   presealer?: ProductOption[];
-  padlo?: any;
-  fal?: any;
-  bkomponens?: any;
+  padlo?: {
+    super: MikrocementProduct & { options: ProductOption[] };
+    medium: MikrocementProduct & { options: ProductOption[] };
+  };
+  fal?: {
+    big: MikrocementProduct & { options: ProductOption[] };
+    small: MikrocementProduct & { options: ProductOption[] };
+  };
+  bkomponens?: {
+    xxl: {
+      literPerKg: number;
+      options: ProductOption[];
+    };
+    xl: {
+      literPerKg: number;
+      options: ProductOption[];
+    };
+  };
+  lakkok: Record<string, LakkProduct>;
 }
