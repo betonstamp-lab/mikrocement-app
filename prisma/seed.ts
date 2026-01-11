@@ -5,8 +5,14 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('🌱 Adatbázis feltöltése kezdődik...');
 
+  // ============================================
+  // NATTURE RENDSZER
+  // ============================================
+  
+  console.log('📦 Natture termékek feltöltése...');
+
   // Natture - Alapozók
-  const nattureABS = await prisma.product.create({
+  await prisma.product.create({
     data: {
       system: 'natture',
       category: 'alapozo',
@@ -22,7 +28,7 @@ async function main() {
     }
   });
 
-  const natturePlusz = await prisma.product.create({
+  await prisma.product.create({
     data: {
       system: 'natture',
       category: 'alapozo',
@@ -38,7 +44,7 @@ async function main() {
     }
   });
 
-  const nattureBarrier = await prisma.product.create({
+  await prisma.product.create({
     data: {
       system: 'natture',
       category: 'alapozo',
@@ -54,7 +60,7 @@ async function main() {
     }
   });
 
-  const nattureGrip = await prisma.product.create({
+  await prisma.product.create({
     data: {
       system: 'natture',
       category: 'alapozo',
@@ -70,7 +76,7 @@ async function main() {
   });
 
   // Natture - Mikrocementek
-  const nattureXL = await prisma.product.create({
+  await prisma.product.create({
     data: {
       system: 'natture',
       category: 'mikrocement',
@@ -85,7 +91,7 @@ async function main() {
     }
   });
 
-  const nattureL = await prisma.product.create({
+  await prisma.product.create({
     data: {
       system: 'natture',
       category: 'mikrocement',
@@ -100,7 +106,7 @@ async function main() {
     }
   });
 
-  const nattureM = await prisma.product.create({
+  await prisma.product.create({
     data: {
       system: 'natture',
       category: 'mikrocement',
@@ -115,7 +121,7 @@ async function main() {
     }
   });
 
-  const nattureS = await prisma.product.create({
+  await prisma.product.create({
     data: {
       system: 'natture',
       category: 'mikrocement',
@@ -131,7 +137,7 @@ async function main() {
   });
 
   // Natture - Lakkok
-  const nattureOneCoat = await prisma.product.create({
+  await prisma.product.create({
     data: {
       system: 'natture',
       category: 'lakk',
@@ -147,7 +153,7 @@ async function main() {
     }
   });
 
-  const nattureDragon = await prisma.product.create({
+  await prisma.product.create({
     data: {
       system: 'natture',
       category: 'lakk',
@@ -162,7 +168,7 @@ async function main() {
     }
   });
 
-  const nattureTop100 = await prisma.product.create({
+  await prisma.product.create({
     data: {
       system: 'natture',
       category: 'lakk',
@@ -179,19 +185,329 @@ async function main() {
   });
 
   console.log('✅ Natture termékek feltöltve!');
-  console.log(`  - ${nattureABS.name}`);
-  console.log(`  - ${natturePlusz.name}`);
-  console.log(`  - ${nattureBarrier.name}`);
-  console.log(`  - ${nattureGrip.name}`);
-  console.log(`  - ${nattureXL.name}`);
-  console.log(`  - ${nattureL.name}`);
-  console.log(`  - ${nattureM.name}`);
-  console.log(`  - ${nattureS.name}`);
-  console.log(`  - ${nattureOneCoat.name}`);
-  console.log(`  - ${nattureDragon.name}`);
-  console.log(`  - ${nattureTop100.name}`);
+
+  // ============================================
+  // EFFECTO QUARTZ RENDSZER
+  // ============================================
   
-  console.log('🎉 Adatbázis feltöltés kész!');
+  console.log('📦 Effecto Quartz termékek feltöltése...');
+
+  // Effecto Quartz - Alapozók
+  await prisma.product.create({
+    data: {
+      system: 'effectoQuartz',
+      category: 'alapozo',
+      type: 'abs',
+      name: 'Primacem ABS',
+      info: 'Univerzális alapozó',
+      options: {
+        create: [
+          { kg: 5, price: 4178, m2: 50 }
+        ]
+      }
+    }
+  });
+
+  await prisma.product.create({
+    data: {
+      system: 'effectoQuartz',
+      category: 'alapozo',
+      type: 'plusz',
+      name: 'Primacem Plusz',
+      info: 'Erősebb tapadás',
+      options: {
+        create: [
+          { kg: 5, price: 5608, m2: 50 }
+        ]
+      }
+    }
+  });
+
+  // Effecto Quartz - Padló Mikrocementek
+  await prisma.product.create({
+    data: {
+      system: 'effectoQuartz',
+      category: 'mikrocement',
+      type: 'super',
+      name: 'Super grain',
+      info: 'Padló - 2 réteg',
+      options: {
+        create: [
+          { kg: 20, price: 2620 }
+        ]
+      }
+    }
+  });
+
+  await prisma.product.create({
+    data: {
+      system: 'effectoQuartz',
+      category: 'mikrocement',
+      type: 'medium',
+      name: 'Medium grain',
+      info: 'Padló - 1 réteg',
+      options: {
+        create: [
+          { kg: 20, price: 2620 }
+        ]
+      }
+    }
+  });
+
+  // Effecto Quartz - Fal Mikrocementek
+  await prisma.product.create({
+    data: {
+      system: 'effectoQuartz',
+      category: 'mikrocement',
+      type: 'big',
+      name: 'Big grain',
+      info: 'Fal - durva szemcse',
+      options: {
+        create: [
+          { kg: 20, price: 2620 }
+        ]
+      }
+    }
+  });
+
+  await prisma.product.create({
+    data: {
+      system: 'effectoQuartz',
+      category: 'mikrocement',
+      type: 'small',
+      name: 'Small grain',
+      info: 'Fal - finom szemcse',
+      options: {
+        create: [
+          { kg: 20, price: 2620 }
+        ]
+      }
+    }
+  });
+
+  // Effecto Quartz - Lakkok
+  await prisma.product.create({
+    data: {
+      system: 'effectoQuartz',
+      category: 'lakk',
+      type: 'presealer',
+      name: 'PreSealer',
+      info: 'Alapozó lakk',
+      options: {
+        create: [
+          { liters: 5, price: 10916, m2: 50 }
+        ]
+      }
+    }
+  });
+
+  await prisma.product.create({
+    data: {
+      system: 'effectoQuartz',
+      category: 'lakk',
+      type: 'topsealer',
+      name: 'TopSealer',
+      info: 'Végső lakk',
+      options: {
+        create: [
+          { liters: 5, price: 23734, m2: 80 }
+        ]
+      }
+    }
+  });
+
+  console.log('✅ Effecto Quartz termékek feltöltve!');
+
+  // ============================================
+  // EFFECTO PU RENDSZER
+  // ============================================
+  
+  console.log('📦 Effecto PU termékek feltöltése...');
+
+  // Effecto PU - Alapozók
+  await prisma.product.create({
+    data: {
+      system: 'effectoPU',
+      category: 'alapozo',
+      type: 'abs',
+      name: 'Primacem ABS',
+      info: 'Univerzális alapozó',
+      options: {
+        create: [
+          { kg: 5, price: 4178, m2: 50 }
+        ]
+      }
+    }
+  });
+
+  await prisma.product.create({
+    data: {
+      system: 'effectoPU',
+      category: 'alapozo',
+      type: 'barrier',
+      name: 'Primapox 100 Barrier',
+      info: '2 komponensű, vízálló',
+      options: {
+        create: [
+          { kg: 20, price: 9520, m2: 40 }
+        ]
+      }
+    }
+  });
+
+  // Effecto PU - Mikrocementek
+  await prisma.product.create({
+    data: {
+      system: 'effectoPU',
+      category: 'mikrocement',
+      type: 'big',
+      name: 'PU Big',
+      info: 'Nagy szemcse, 3 réteg',
+      options: {
+        create: [
+          { kg: 20, price: 3870 }
+        ]
+      }
+    }
+  });
+
+  await prisma.product.create({
+    data: {
+      system: 'effectoPU',
+      category: 'mikrocement',
+      type: 'medium',
+      name: 'PU Medium',
+      info: 'Közepes szemcse, 3 réteg',
+      options: {
+        create: [
+          { kg: 20, price: 3870 }
+        ]
+      }
+    }
+  });
+
+  await prisma.product.create({
+    data: {
+      system: 'effectoPU',
+      category: 'mikrocement',
+      type: 'small',
+      name: 'PU Small',
+      info: 'Finom szemcse, 3 réteg',
+      options: {
+        create: [
+          { kg: 20, price: 3870 }
+        ]
+      }
+    }
+  });
+
+  // Effecto PU - Lakkok
+  await prisma.product.create({
+    data: {
+      system: 'effectoPU',
+      category: 'lakk',
+      type: 'pu',
+      name: 'PU Lakk',
+      info: '2 komponensű PU lakk',
+      options: {
+        create: [
+          { liters: 6, price: 53700, m2: 72 }
+        ]
+      }
+    }
+  });
+
+  console.log('✅ Effecto PU termékek feltöltve!');
+
+  // ============================================
+  // POOL RENDSZER
+  // ============================================
+  
+  console.log('📦 Pool termékek feltöltése...');
+
+  // Pool - Alapozó
+  await prisma.product.create({
+    data: {
+      system: 'pool',
+      category: 'alapozo',
+      type: 'arcicem',
+      name: 'Arcicem Alapozó',
+      info: 'Medencékhez',
+      options: {
+        create: [
+          { kg: 20, price: 6370, m2: 50 }
+        ]
+      }
+    }
+  });
+
+  // Pool - Mikrocementek
+  await prisma.product.create({
+    data: {
+      system: 'pool',
+      category: 'mikrocement',
+      type: 'xxl',
+      name: 'Aquaciment XXL',
+      info: '2 réteg',
+      options: {
+        create: [
+          { kg: 18, price: 5920 }
+        ]
+      }
+    }
+  });
+
+  await prisma.product.create({
+    data: {
+      system: 'pool',
+      category: 'mikrocement',
+      type: 'xl',
+      name: 'Aquaciment XL',
+      info: '1 réteg',
+      options: {
+        create: [
+          { kg: 18, price: 5920 }
+        ]
+      }
+    }
+  });
+
+  // Pool - B komponens (gyanta)
+  await prisma.product.create({
+    data: {
+      system: 'pool',
+      category: 'gyanta',
+      type: 'bkomp',
+      name: 'B komponens',
+      info: 'Kötőanyag',
+      options: {
+        create: [
+          { liters: 10, price: 11680 },
+          { liters: 25, price: 11200 }
+        ]
+      }
+    }
+  });
+
+  // Pool - Lakkok
+  await prisma.product.create({
+    data: {
+      system: 'pool',
+      category: 'lakk',
+      type: 'wt',
+      name: 'Water Top',
+      info: 'Medence lakk',
+      options: {
+        create: [
+          { liters: 5, price: 31260, m2: 30 }
+        ]
+      }
+    }
+  });
+
+  console.log('✅ Pool termékek feltöltve!');
+
+  console.log('🎉 Minden rendszer adatbázisba töltve!');
 }
 
 main()
