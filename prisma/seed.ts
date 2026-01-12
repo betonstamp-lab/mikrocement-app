@@ -425,17 +425,17 @@ async function main() {
   
   console.log('📦 Pool termékek feltöltése...');
 
-  // Pool - Alapozó
+  // Pool - Alapozó (Arcicem Pool gyanta)
   await prisma.product.create({
     data: {
       system: 'pool',
       category: 'alapozo',
       type: 'arcicem',
-      name: 'Arcicem Alapozó',
-      info: 'Medencékhez',
+      name: 'Arcicem Pool gyanta',
+      info: 'Vízbázisú akrilgyanta medencékhez',
       options: {
         create: [
-          { kg: 20, price: 6370, m2: 50 }
+          { liters: 25, price: 69382, m2: 200 }
         ]
       }
     }
@@ -448,10 +448,10 @@ async function main() {
       category: 'mikrocement',
       type: 'xxl',
       name: 'Aquaciment XXL',
-      info: '2 réteg',
+      info: 'Előkészítő mikrocement medencékhez - 2 réteg',
       options: {
         create: [
-          { kg: 18, price: 5920 }
+          { kg: 18, price: 25575 }
         ]
       }
     }
@@ -463,43 +463,42 @@ async function main() {
       category: 'mikrocement',
       type: 'xl',
       name: 'Aquaciment XL',
-      info: '1 réteg',
+      info: 'Befejező mikrocement medencékhez - 1 réteg',
       options: {
         create: [
-          { kg: 18, price: 5920 }
+          { kg: 18, price: 33591 }
         ]
       }
     }
   });
 
-  // Pool - B komponens (gyanta)
+  // Pool - B komponens
   await prisma.product.create({
     data: {
       system: 'pool',
       category: 'gyanta',
       type: 'bkomp',
       name: 'B komponens',
-      info: 'Kötőanyag',
+      info: 'Kötőanyag Aquaciment rendszerhez',
       options: {
         create: [
-          { liters: 10, price: 11680 },
           { liters: 25, price: 11200 }
         ]
       }
     }
   });
 
-  // Pool - Lakkok
+  // Pool - Lakk (Topsealer WT Pool)
   await prisma.product.create({
     data: {
       system: 'pool',
       category: 'lakk',
       type: 'wt',
-      name: 'Water Top',
-      info: 'Medence lakk',
+      name: 'Topsealer WT Pool',
+      info: 'Lakk mikrocement medencékhez',
       options: {
         create: [
-          { liters: 5, price: 31260, m2: 30 }
+          { liters: 5, price: 60354, m2: 30 }
         ]
       }
     }
