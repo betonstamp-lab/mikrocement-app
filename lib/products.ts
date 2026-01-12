@@ -230,53 +230,49 @@ export const PRODUCTS: Record<string, SystemProducts> = {
   },
   
   pool: {
-    name: 'Pool',
-    alapozok: {
-      arcicem: { 
-        name: 'Arcicem Pool gyanta', 
-        options: [
-          { liters: 5, price: 4606, m2: 50 },
-          { liters: 25, price: 3525, m2: 250 }
-        ],
-        info: 'Vízzáró alapozó réteg'
-      }
+  name: 'Pool',
+  alapozok: {
+    arcicem: {
+      name: 'Arcicem Alapozó',
+      info: 'Medencékhez',
+      options: [{ kg: 20, price: 88115, m2: 200 }]  // <- ÚJ ÁR
+    }
+  },
+  mikrocementek: {
+    xxl: { 
+      name: 'Aquaciment XXL', 
+      kgPerM2: 2, 
+      info: '2 réteg',
+      options: [{ kg: 18, price: 32480 }]  // <- ÚJ ÁR
     },
-    mikrocementek: {
-      xxl: {
-        name: 'Aquaciment XXL',
-        kgPerM2: 2,
-        options: [{ kg: 18, price: 1804, m2: 9 }],
-        info: '2 réteg XXL'
-      },
-      xl: {
-        name: 'Aquaciment XL',
-        kgPerM2: 1.5,
-        options: [{ kg: 18, price: 2370, m2: 12 }],
-        info: '1 réteg XL'
-      }
+    xl: { 
+      name: 'Aquaciment XL', 
+      kgPerM2: 1.53, 
+      info: '1 réteg',
+      options: [{ kg: 18, price: 42660 }]  // <- ÚJ ÁR
+    }
+  },
+  bkomponens: {
+    xxl: {
+      literPerKg: 0.3,
+      options: [
+        { liters: 5, price: 23030 },
+        { liters: 25, price: 88115 }
+      ]
     },
-    bkomponens: {
-      xxl: {
-        literPerKg: 0.31,
-        options: [
-          { liters: 5, price: 4606 },
-          { liters: 25, price: 3525 }
-        ]
-      },
-      xl: {
-        literPerKg: 0.35,
-        options: [
-          { liters: 5, price: 4606 },
-          { liters: 25, price: 3521 }
-        ]
-      }
-    },
-    lakkok: {
-      wt: { 
-        name: 'WT Pool', 
-        options: [{ liters: 5, price: 15330, m2: 83 }],
-        info: '2 réteg vízzáró lakk'
-      }
+    xl: {
+      literPerKg: 0.408,
+      options: [
+        { liters: 5, price: 23030 },
+        { liters: 25, price: 88030 }
+      ]
+    }
+  },  lakkok: {
+    wt: {
+      name: 'WT Pool',
+      info: 'Medence lakk',
+      options: [{ liters: 5, price: 76650, m2: 42 }]  // <- ÚJ ÁR
     }
   }
+}
 };
