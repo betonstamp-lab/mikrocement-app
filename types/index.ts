@@ -61,8 +61,8 @@ export interface CalculationResult {
 }
 
 export interface SystemProducts {
-name?: string;  
-alapozok: Record<string, AlapozoProduct>;
+  name?: string;
+  alapozok: Record<string, AlapozoProduct>;
   halo?: ProductOption[];
   mikrocementek?: Record<string, MikrocementProduct>;
   mikroOptions?: Record<string, ProductOption[]>;

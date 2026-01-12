@@ -4,39 +4,38 @@ export const PRODUCTS: Record<string, SystemProducts> = {
   natture: {
     name: 'Natture',
     alapozok: {
-      abs: { 
-        name: 'Primacem ABS', 
+      abs: {
+        name: 'Primacem ABS',
+        info: 'Univerzális alapozó minden felületre',
         options: [
           { kg: 1, price: 0, m2: 10 },
           { kg: 5, price: 4178, m2: 50 }
-        ],
-        info: 'Univerzális alapozó minden felületre'
+        ]
       },
-      plusz: { 
-        name: 'Primacem Plusz', 
+      plusz: {
+        name: 'Primacem Plusz',
+        info: 'Erősebb tapadás, problémás felületekre',
         options: [
           { kg: 1, price: 7199, m2: 10 },
           { kg: 5, price: 5608, m2: 50 }
-        ],
-        info: 'Erősebb tapadás, problémás felületekre'
+        ]
       },
-      barrier: { 
-        name: 'Primapox 100 Barrier', 
+      barrier: {
+        name: 'Primapox 100 Barrier',
+        info: '2 komponensű, vízálló alapozó',
         options: [
           { kg: 5, price: 14304, m2: 10 },
           { kg: 20, price: 9520, m2: 40 }
-        ],
-        info: '2 komponensű, vízálló alapozó'
+        ]
       },
-      grip: { 
-        name: 'Primacem Grip', 
-        options: [{ kg: 5, price: 4338, m2: 20 }],
-        info: 'Tapadásfokozó adalék'
+      grip: {
+        name: 'Primacem Grip',
+        info: 'Tapadásfokozó adalék',
+        options: [{ kg: 5, price: 4338, m2: 20 }]
       }
     },
     halo: [
-      { price: 1038, m2: 50 },
-      { price: 1050, m2: 1 }
+      { kg: 50, price: 9460, m2: 50 }
     ],
     mikrocementek: {
       xl: { name: 'Natture XL', kgPerM2: 1, literPerKg: 0.3, info: 'Legnagyobb szemcse, 3 réteg' },
@@ -45,234 +44,170 @@ export const PRODUCTS: Record<string, SystemProducts> = {
       s: { name: 'Natture S', kgPerM2: 0.25, literPerKg: 0.42, info: 'Finom szemcse, 3 réteg' }
     },
     mikroOptions: {
-      xl: [{ kg: 20, price: 2347, m2: 20 }],
-      l: [{ kg: 20, price: 2347, m2: 28 }],
-      m: [{ kg: 18, price: 2388, m2: 36 }],
-      s: [{ kg: 15, price: 3129, m2: 60 }]
+      xl: [{ kg: 20, price: 2347 }],
+      l: [{ kg: 20, price: 2347 }],
+      m: [{ kg: 18, price: 2388 }],
+      s: [{ kg: 15, price: 3129 }]
     },
     gyanta: [
-      { liters: 5, price: 3998 },
-      { liters: 25, price: 3119 }
+      { liters: 1, price: 5899 },
+      { liters: 5, price: 5699 },
+      { liters: 25, price: 5289 }
     ],
-    presealer: [
-      { liters: 1, price: 14967, m2: 16 },
-      { liters: 5, price: 10916, m2: 80 }
-    ],
+    presealer: [{ liters: 5, price: 10916, m2: 50 }],
     lakkok: {
-      onecoat: { 
-        name: 'ONE Coat', 
+      onecoat: {
+        name: 'ONE Coat',
+        info: 'Egyrétegű lakk, PreSealer-rel együtt használandó',
+        needPresealer: true,
         options: [
           { liters: 1, price: 24190, m2: 16 },
           { liters: 5, price: 23734, m2: 80 }
-        ], 
-        needPresealer: true,
-        info: 'Egyrétegű lakk, PreSealer-rel együtt használandó'
+        ]
       },
-      dragon: { 
-        name: 'Dragon', 
-        options: [{ liters: 4, price: 105930, m2: 53 }],
+      dragon: {
+        name: 'Dragon',
+        info: 'Prémium minőség, PreSealer-rel együtt használandó',
         needPresealer: true,
-        info: 'Prémium minőség, PreSealer-rel együtt használandó'
+        options: [{ liters: 4, price: 105930, m2: 53 }]
       },
-      top100: { 
-        name: 'TOP 100', 
+      top100: {
+        name: 'TOP 100',
+        info: 'Kétrétegű lakk, PreSealer nélkül',
+        needPresealer: false,
         options: [
           { liters: 1, price: 39360, m2: 14 },
           { liters: 5, price: 36930, m2: 71 }
-        ], 
-        needPresealer: false,
-        info: 'Kétrétegű lakk, PreSealer nélkül'
+        ]
       }
     }
   },
-  
   effectoQuartz: {
     name: 'Effecto Quartz',
     alapozok: {
-      abs: { 
-        name: 'Primacem ABS', 
-        options: [
-          { kg: 1, price: 0, m2: 10 },
-          { kg: 5, price: 4178, m2: 50 }
-        ],
-        info: 'Univerzális alapozó'
+      abs: {
+        name: 'Primacem ABS',
+        info: 'Univerzális alapozó',
+        options: [{ kg: 5, price: 4178, m2: 50 }]
       },
-      plusz: { 
-        name: 'Primacem Plusz', 
-        options: [
-          { kg: 1, price: 7199, m2: 10 },
-          { kg: 5, price: 5608, m2: 50 }
-        ],
-        info: 'Erősebb tapadás'
-      },
-      barrier: { 
-        name: 'Primapox Barrier', 
-        options: [
-          { kg: 5, price: 14304, m2: 10 },
-          { kg: 20, price: 9520, m2: 40 }
-        ],
-        info: '2 komponensű alapozó'
-      },
-      grip: { 
-        name: 'Primacem Grip', 
-        options: [{ kg: 5, price: 4338, m2: 20 }],
-        info: 'Tapadásfokozó'
+      plusz: {
+        name: 'Primacem Plusz',
+        info: 'Erősebb tapadás',
+        options: [{ kg: 5, price: 5608, m2: 50 }]
       }
     },
     padlo: {
       super: {
         name: 'Super grain',
-        kgPerM2: 1.3,
-        options: [
-          { kg: 6, price: 5263, m2: 4.6 },
-          { kg: 17, price: 4441, m2: 13 }
-        ],
-        info: 'Padlóra: 2 réteg Super + 1 réteg Medium'
+        kgPerM2: 2.25,
+        info: 'Padló - 2 réteg',
+        options: [{ kg: 20, price: 2620 }]
       },
       medium: {
         name: 'Medium grain',
-        kgPerM2: 0.45,
-        options: [
-          { kg: 6, price: 5518, m2: 13.3 },
-          { kg: 17, price: 4728, m2: 37.7 }
-        ],
-        info: 'Padlóra: befejező réteg'
+        kgPerM2: 1.125,
+        info: 'Padló - 1 réteg',
+        options: [{ kg: 20, price: 2620 }]
       }
     },
     fal: {
       big: {
         name: 'Big grain',
-        kgPerM2: 0.9,
-        options: [
-          { kg: 6, price: 5263, m2: 6.6 },
-          { kg: 17, price: 4441, m2: 18.8 }
-        ],
-        info: 'Falra: 2 réteg Big + 1 réteg Small'
+        kgPerM2: 1.5,
+        info: 'Fal - durva szemcse',
+        options: [{ kg: 20, price: 2620 }]
       },
       small: {
         name: 'Small grain',
-        kgPerM2: 0.25,
-        options: [
-          { kg: 6, price: 5390, m2: 24 }
-        ],
-        info: 'Falra: befejező réteg'
+        kgPerM2: 0.75,
+        info: 'Fal - finom szemcse',
+        options: [{ kg: 20, price: 2620 }]
       }
     },
     lakkok: {
-      onecoat: { 
-        name: 'ONE Coat', 
-        options: [
-          { liters: 1, price: 24190, m2: 16 },
-          { liters: 5, price: 23734, m2: 80 }
-        ],
-        info: 'Egyrétegű lakk'
+      presealer: {
+        name: 'PreSealer',
+        info: 'Alapozó lakk',
+        options: [{ liters: 5, price: 10916, m2: 50 }]
       },
-      dragon: { 
-        name: 'Dragon', 
-        options: [{ liters: 4, price: 105930, m2: 53 }],
-        info: 'Prémium minőség'
-      },
-      top100: { 
-        name: 'TOP 100', 
-        options: [
-          { liters: 1, price: 39360, m2: 14 },
-          { liters: 5, price: 36930, m2: 71 }
-        ],
-        info: 'Kétrétegű lakk'
+      topsealer: {
+        name: 'TopSealer',
+        info: 'Végső lakk',
+        options: [{ liters: 5, price: 23734, m2: 80 }]
       }
     }
   },
-  
   effectoPU: {
     name: 'Effecto PU',
     alapozok: {
-      abs: { 
-        name: 'Primacem ABS', 
-        options: [{ kg: 5, price: 4178, m2: 50 }],
-        info: 'Univerzális alapozó'
+      abs: {
+        name: 'Primacem ABS',
+        info: 'Univerzális alapozó',
+        options: [{ kg: 5, price: 4178, m2: 50 }]
       },
-      plusz: { 
-        name: 'Primacem Plusz', 
-        options: [{ kg: 5, price: 5608, m2: 50 }],
-        info: 'Erősebb tapadás'
-      },
-      barrier: { 
-        name: 'Primapox Barrier', 
-        options: [{ kg: 20, price: 9520, m2: 40 }],
-        info: '2 komponensű alapozó'
+      barrier: {
+        name: 'Primapox 100 Barrier',
+        info: '2 komponensű, vízálló',
+        options: [{ kg: 20, price: 9520, m2: 40 }]
       }
     },
     mikrocementek: {
-      big: { name: 'PU Big', kgPerM2: 0.9, info: 'Nagy szemcse, építkezés' },
-      medium: { name: 'PU Medium', kgPerM2: 0.45, info: 'Közepes szemcse' },
-      small: { name: 'PU Small', kgPerM2: 0.25, info: 'Finom szemcse, befejezés' }
-    },
-    mikroOptions: {
-      big: [{ kg: 10.875, price: 6816, m2: 12 }],
-      medium: [{ kg: 10.875, price: 6816, m2: 24 }],
-      small: [{ kg: 10.875, price: 6816, m2: 43 }]
+      big: {
+        name: 'PU Big',
+        kgPerM2: 1.5,
+        info: 'Nagy szemcse, 3 réteg',
+        options: [{ kg: 20, price: 3870 }]
+      },
+      medium: {
+        name: 'PU Medium',
+        kgPerM2: 1.125,
+        info: 'Közepes szemcse, 3 réteg',
+        options: [{ kg: 20, price: 3870 }]
+      },
+      small: {
+        name: 'PU Small',
+        kgPerM2: 0.75,
+        info: 'Finom szemcse, 3 réteg',
+        options: [{ kg: 20, price: 3870 }]
+      }
     },
     lakkok: {
-      onecoat: { 
-        name: 'ONE Coat', 
-        options: [
-          { liters: 1, price: 24190, m2: 16 },
-          { liters: 5, price: 23734, m2: 80 }
-        ],
-        info: 'Egyrétegű lakk'
-      },
-      dragon: { 
-        name: 'Dragon', 
-        options: [{ liters: 4, price: 105930, m2: 53 }],
-        info: 'Prémium minőség'
+      pu: {
+        name: 'PU Lakk',
+        info: '2 komponensű PU lakk',
+        options: [{ liters: 6, price: 53700, m2: 72 }]
       }
     }
   },
-  
-  pool: {
+pool: {
   name: 'Pool',
   alapozok: {
     arcicem: {
-      name: 'Arcicem Alapozó',
-      info: 'Medencékhez',
-      options: [{ kg: 20, price: 88115, m2: 200 }]  // <- ÚJ ÁR
+      name: 'Arcicem Pool 25L vízbázisú akrilgyanta, az Atlanttic Aquaciment "B" komponense és alapozója (TT01016)',
+      info: 'Vízbázisú akrilgyanta medencékhez',
+      options: [{ liters: 25, price: 88115, m2: 200 }]
     }
   },
   mikrocementek: {
     xxl: { 
-      name: 'Aquaciment XXL', 
-      kgPerM2: 2, 
+      name: 'Atlanttic Aquaciment XXL 18Kg - előkészítő mikrocement medencékhez (TT01050)', 
+      kgPerM2: 4.05,
       info: '2 réteg',
-      options: [{ kg: 18, price: 32480 }]  // <- ÚJ ÁR
+      options: [{ kg: 18, price: 32480 }]
     },
     xl: { 
-      name: 'Aquaciment XL', 
-      kgPerM2: 1.53, 
+      name: 'Atlanttic Aquaciment XL 18Kg - befejező mikrocement medencékhez (TT01051)', 
+      kgPerM2: 1.53,
       info: '1 réteg',
-      options: [{ kg: 18, price: 42660 }]  // <- ÚJ ÁR
+      options: [{ kg: 18, price: 42660 }]
     }
   },
-  bkomponens: {
-    xxl: {
-      literPerKg: 0.3,
-      options: [
-        { liters: 5, price: 23030 },
-        { liters: 25, price: 88115 }
-      ]
-    },
-    xl: {
-      literPerKg: 0.408,
-      options: [
-        { liters: 5, price: 23030 },
-        { liters: 25, price: 88030 }
-      ]
-    }
-  },  lakkok: {
+  lakkok: {
     wt: {
-      name: 'WT Pool',
-      info: 'Medence lakk',
-      options: [{ liters: 5, price: 76650, m2: 42 }]  // <- ÚJ ÁR
-    }
-  }
+      name: 'Topsealer WT Pool 5L - lakk mikrocement medencékhez (TT02070)',
+      info: 'Medence lakk - 2 réteg',
+      options: [{ liters: 5, price: 76650, m2: 80 }]
 }
+  }
+},
 };

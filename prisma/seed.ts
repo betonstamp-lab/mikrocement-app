@@ -419,13 +419,19 @@ async function main() {
 
   console.log('✅ Effecto PU termékek feltöltve!');
 
-  // Pool - Alapozó (Arcicem Pool gyanta)
+// ============================================
+  // POOL RENDSZER
+  // ============================================
+  
+  console.log('📦 Pool termékek feltöltése...');
+
+  // Pool - Alapozó
   await prisma.product.create({
     data: {
       system: 'pool',
       category: 'alapozo',
       type: 'arcicem',
-      name: 'Arcicem Pool gyanta',
+      name: 'Arcicem Pool 25L vízbázisú akrilgyanta, az Atlanttic Aquaciment "B" komponense és alapozója (TT01016)',
       info: 'Vízbázisú akrilgyanta medencékhez',
       options: {
         create: [
@@ -435,13 +441,13 @@ async function main() {
     }
   });
 
-  // Pool - Mikrocementek
+  // Pool - Aquaciment XXL
   await prisma.product.create({
     data: {
       system: 'pool',
       category: 'mikrocement',
       type: 'xxl',
-      name: 'Aquaciment XXL',
+      name: 'Atlanttic Aquaciment XXL 18Kg - előkészítő mikrocement medencékhez (TT01050)',
       info: 'Előkészítő mikrocement medencékhez - 2 réteg',
       options: {
         create: [
@@ -451,12 +457,13 @@ async function main() {
     }
   });
 
+  // Pool - Aquaciment XL
   await prisma.product.create({
     data: {
       system: 'pool',
       category: 'mikrocement',
       type: 'xl',
-      name: 'Aquaciment XL',
+      name: 'Atlanttic Aquaciment XL 18Kg - befejező mikrocement medencékhez (TT01051)',
       info: 'Befejező mikrocement medencékhez - 1 réteg',
       options: {
         create: [
@@ -466,13 +473,13 @@ async function main() {
     }
   });
 
-// Pool - B komponens XXL 5L
+  // Pool - B komponens XXL 5L
   await prisma.product.create({
     data: {
       system: 'pool',
       category: 'gyanta',
       type: 'bkomp_xxl_5l',
-      name: 'B komponens XXL 5L',
+      name: 'B komponens gyanta mikrocementhez XXL 5L',
       info: 'Kötőanyag Aquaciment XXL-hez',
       options: {
         create: [
@@ -488,7 +495,7 @@ async function main() {
       system: 'pool',
       category: 'gyanta',
       type: 'bkomp_xxl_25l',
-      name: 'B komponens XXL 25L',
+      name: 'B komponens gyanta mikrocementhez XXL 25L',
       info: 'Kötőanyag Aquaciment XXL-hez',
       options: {
         create: [
@@ -504,7 +511,7 @@ async function main() {
       system: 'pool',
       category: 'gyanta',
       type: 'bkomp_xl_5l',
-      name: 'B komponens XL 5L',
+      name: 'B komponens gyanta mikrocementhez XL 5L',
       info: 'Kötőanyag Aquaciment XL-hez',
       options: {
         create: [
@@ -520,7 +527,7 @@ async function main() {
       system: 'pool',
       category: 'gyanta',
       type: 'bkomp_xl_25l',
-      name: 'B komponens XL 25L',
+      name: 'B komponens gyanta mikrocementhez XL 25L',
       info: 'Kötőanyag Aquaciment XL-hez',
       options: {
         create: [
@@ -529,13 +536,14 @@ async function main() {
       }
     }
   });
-  // Pool - Lakk (Topsealer WT Pool)
+
+  // Pool - Lakk
   await prisma.product.create({
     data: {
       system: 'pool',
       category: 'lakk',
       type: 'wt',
-      name: 'Topsealer WT Pool',
+      name: 'Topsealer WT Pool 5L - lakk mikrocement medencékhez (TT02070)',
       info: 'Lakk mikrocement medencékhez',
       options: {
         create: [
@@ -545,6 +553,7 @@ async function main() {
     }
   });
 
+  console.log('✅ Pool termékek feltöltve!');
   console.log('🎉 Minden rendszer adatbázisba töltve!');
 }
 

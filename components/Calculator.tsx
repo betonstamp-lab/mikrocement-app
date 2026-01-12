@@ -290,45 +290,48 @@ export default function Calculator() {
     }
 
     // POOL
-    if (system === 'pool') {
-      const xxlKg = totalM2 * 2 * sys.mikrocementek!.xxl.kgPerM2;
-      const xxlOptions = sys.mikrocementek!.xxl.options || [];
-      const xxlPieces = xxlOptions[0]?.kg ? Math.ceil(xxlKg / xxlOptions[0].kg) : 0;
-      res.items.push({
-        cat: 'Aquaciment XXL (2 réteg)',
-        pkgs: xxlOptions[0] ? [{...xxlOptions[0], qty: xxlPieces, name: 'Aquaciment XXL 18kg'}] : [],
-        price: xxlOptions[0] ? xxlOptions[0].price * xxlPieces : 0
-      });
-      res.layers.push('2× XXL');
-      
-      const xlKg = totalM2 * 1 * sys.mikrocementek!.xl.kgPerM2;
-      const xlOptions = sys.mikrocementek!.xl.options || [];
-      const xlPieces = xlOptions[0]?.kg ? Math.ceil(xlKg / xlOptions[0].kg) : 0;
-      res.items.push({
-        cat: 'Aquaciment XL (1 réteg)',
-        pkgs: xlOptions[0] ? [{...xlOptions[0], qty: xlPieces, name: 'Aquaciment XL 18kg'}] : [],
-        price: xlOptions[0] ? xlOptions[0].price * xlPieces : 0
-      });
-      res.layers.push('1× XL');
-      
-      const xxlLiters = xxlKg * sys.bkomponens!.xxl.literPerKg;
-      const xxlBPkgs = optimizeByLiters(xxlLiters, sys.bkomponens!.xxl.options);
-      
-      const xlLiters = xlKg * sys.bkomponens!.xl.literPerKg;
-      const xlBPkgs = optimizeByLiters(xlLiters, sys.bkomponens!.xl.options);
-      
-      const bPkgs = [
-        ...xxlBPkgs.map(p => ({...p, name: `B komp XXL ${p.liters}L`})),
-        ...xlBPkgs.map(p => ({...p, name: `B komp XL ${p.liters}L`}))
-      ];
-      
-      res.items.push({
-        cat: 'B komponens',
-        pkgs: bPkgs,
-        price: bPkgs.reduce((s,p) => s+p.price*p.qty!, 0)
-      });
-    }
+if (system === 'pool') {
+  const xxlKg = totalM2 * sys.mikrocementek!.xxl.kgPerM2;
+  const xxlOptions = sys.mikrocementek!.xxl.options || [];
+  const xxlPieces = xxlOptions[0]?.kg ? Math.ceil(xxlKg / xxlOptions[0].kg) : 0;
+  res.items.push({
+    cat: 'Aquaciment XXL (2 réteg)',
+    pkgs: xxlOptions[0] ? [{...xxlOptions[0], qty: xxlPieces, name: 'Aquaciment XXL 18kg'}] : [],
+    price: xxlOptions[0] ? xxlOptions[0].price * xxlPieces : 0
+  });
+  res.layers.push('2× XXL');
+  
+  const xlKg = totalM2 * sys.mikrocementek!.xl.kgPerM2;
+  const xlOptions = sys.mikrocementek!.xl.options || [];
+  const xlPieces = xlOptions[0]?.kg ? Math.ceil(xlKg / xlOptions[0].kg) : 0;
+  res.items.push({
+    cat: 'Aquaciment XL (1 réteg)',
+    pkgs: xlOptions[0] ? [{...xlOptions[0], qty: xlPieces, name: 'Aquaciment XL 18kg'}] : [],
+    price: xlOptions[0] ? xlOptions[0].price * xlPieces : 0
+  });
+  res.layers.push('1× XL');
+  console.log('XXL kg:', xxlKg);
+console.log('XXL liters:', xxlKg * 0.625);
+console.log('XL kg:', xlKg);
+console.log('XL liters:', xlKg * 0.408);
+  // B komponens - hardcoded számítás
+const xxlLiters = xxlKg * 0.3086;
+const xlLiters = xlKg * 0.408;
 
+// Csak 25L-es kiszerelés, NEM mix!
+const xxl25L = Math.ceil(xxlLiters / 25);
+const xl25L = Math.ceil(xlLiters / 25);
+
+const bPkgs = [];
+if (xxl25L > 0) bPkgs.push({ liters: 25, price: 88115, qty: xxl25L, name: 'B komp XXL 25L' });
+if (xl25L > 0) bPkgs.push({ liters: 25, price: 88030, qty: xl25L, name: 'B komp XL 25L' });
+
+res.items.push({
+  cat: 'B komponens',
+  pkgs: bPkgs,
+  price: bPkgs.reduce((s,p) => s+p.price*p.qty!, 0)
+});
+}
     // Lakk - felületenkénti számítás, majd összesítés típusonként
     const lakkTotals: Record<string, number> = {};
     
