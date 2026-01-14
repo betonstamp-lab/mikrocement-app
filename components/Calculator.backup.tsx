@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { PRODUCTS } from '@/lib/products';
 import { optimizeByM2, optimizeByKg, optimizeByLiters } from '@/lib/utils';
-import { MikrocementSystem, Surface, CalculationResult, SurfaceCalculation, SystemProducts } from '@/types';
+import { MikrocementSystem, Surface, CalculationResult } from '@/types';
 
 export default function Calculator() {
   const [system, setSystem] = useState<MikrocementSystem>('natture');
@@ -22,6 +22,7 @@ export default function Calculator() {
 
   const sys = PRODUCTS[system];
 
+  // Helper Functions
   const getTotalArea = () => {
     return surfaces.reduce((sum, s) => sum + (parseFloat(s.area) || 0), 0);
   };
@@ -60,6 +61,7 @@ export default function Calculator() {
     ));
   };
 
+  // Validation
   const validate = () => {
     const errs: string[] = [];
     const totalArea = getTotalArea();
@@ -105,362 +107,464 @@ export default function Calculator() {
     return errs.length === 0;
   };
 
-  // Egy felület számítása
-  const calculateSurface = (
-    surface: Surface,
-    sys: SystemProducts
-  ): SurfaceCalculation => {
-    const result: SurfaceCalculation = {
-      surfaceId: surface.id,
-      area: parseFloat(surface.area) || 0,
-      system: system,
-      layers: [],
-      materials: []
-    };
-
-    // POOL RENDSZER
-    if (system === 'pool') {
-      const totalM2 = result.area;
-      
-      result.materials.push({
-        category: 'Arcicem Pool gyanta',
-        items: [{ name: 'Arcicem Pool 25L', amount: totalM2 / 200, unit: 'db' }]
-      });
-      
-      const xxlKg = totalM2 * sys.mikrocementek!.xxl.kgPerM2;
-      result.layers.push('2× XXL');
-      result.materials.push({
-        category: 'Aquaciment XXL',
-        items: [{ name: 'Aquaciment XXL 18kg', amount: xxlKg, unit: 'kg' }]
-      });
-      
-      const xlKg = totalM2 * sys.mikrocementek!.xl.kgPerM2;
-      result.layers.push('1× XL');
-      result.materials.push({
-        category: 'Aquaciment XL',
-        items: [{ name: 'Aquaciment XL 18kg', amount: xlKg, unit: 'kg' }]
-      });
-      
-      const xxlLiters = xxlKg * 0.3086;
-      const xlLiters = xlKg * 0.408;
-      result.materials.push({
-        category: 'B komponens',
-        items: [
-          { name: 'B komp XXL', amount: xxlLiters, unit: 'L' },
-          { name: 'B komp XL', amount: xlLiters, unit: 'L' }
-        ]
-      });
-      
-      const lakkM2 = totalM2 * 2;
-      const lakkLiters = lakkM2 * 0.06;
-      result.materials.push({
-        category: 'Topsealer WT Pool',
-        items: [{ name: 'Topsealer WT Pool 5L', amount: lakkLiters, unit: 'L' }]
-      });
-    }
-    
-    // NATTURE RENDSZER
-    if (system === 'natture') {
-      const totalM2 = result.area;
-      const lakk = surface.lakk;
-      const alapozo = surface.alapozo;
-      
-      if (!lakk) return result;
-      
-      // Alapozó
-      if (alapozo && sys.alapozok[alapozo]) {
-        const alapozoData = sys.alapozok[alapozo];
-        const alapozoOption = alapozoData.options[0];
-        
-        if (alapozoOption.m2) {
-          result.materials.push({
-            category: 'Alapozó',
-            items: [{ name: alapozoData.name, amount: totalM2, unit: 'm2' }]
-          });
-        } else if (alapozoOption.kg) {
-          const kgPerM2 = alapozoOption.kg / alapozoOption.m2!;
-          const kgNeeded = totalM2 * kgPerM2;
-          result.materials.push({
-            category: 'Alapozó',
-            items: [{ name: alapozoData.name, amount: kgNeeded, unit: 'kg' }]
-          });
-        }
-      }
-      
-      // Rétegek számítása
-      const totalLayers = surface.layers.xl + surface.layers.l + surface.layers.m + surface.layers.s;
-      if (totalLayers === 0) return result;
-      
-      // Minden réteg típushoz
-      (['xl', 'l', 'm', 's'] as const).forEach(mikroType => {
-        if (surface.layers[mikroType] > 0) {
-          const mikroName = mikroType.toUpperCase();
-          const layerCount = surface.layers[mikroType];
-          result.layers.push(`${layerCount}× ${mikroName}`);
-          
-          // Mikrocement kg
-          const mikroData = sys.mikrocementek![mikroType];
-          const mikroKg = totalM2 * layerCount * mikroData.kgPerM2;
-          result.materials.push({
-            category: `Natture ${mikroName}`,
-            items: [{ name: mikroData.name, amount: mikroKg, unit: 'kg' }]
-          });
-          
-          // Gyanta - EGYSÉGES KATEGÓRIA!
-          const gyantaliter = mikroKg * mikroData.literPerKg!;
-          result.materials.push({
-            category: 'Acricem gyanta',
-            items: [{ name: 'Acricem gyanta', amount: gyantaliter, unit: 'L' }]
-          });
-        }
-      });
-      
-      // Háló (mindig, 3% ráhagyással)
-      const haloM2 = totalM2 * 1.03;
-      result.materials.push({
-        category: 'Háló',
-        items: [{ name: 'Háló 50gr', amount: haloM2, unit: 'm2' }]
-      });
-      
-      // PreSealer (ha ONE Coat vagy Dragon) - 2 RÉTEG!
-      const lakkData = sys.lakkok[lakk];
-      if (lakkData.needPresealer) {
-        const preM2 = totalM2 * 2; // 2 réteg
-        result.materials.push({
-          category: 'PreSealer',
-          items: [{ name: 'PreSealer', amount: preM2, unit: 'm2' }]
-        });
-      }
-      
-      // Lakk - MINDIG 2 RÉTEG!
-      const lakkM2 = totalM2 * 2; // 2 réteg minden lakknál
-      result.materials.push({
-        category: lakkData.name,
-        items: [{ name: lakkData.name, amount: lakkM2, unit: 'm2' }]
-      });
-    }
-    
-    return result;
+  // Calculation
+// Egy felület számítása
+const calculateSurface = (
+  surface: Surface,
+  sys: SystemProducts
+): SurfaceCalculation => {
+  const result: SurfaceCalculation = {
+    surfaceId: surface.id,
+    area: parseFloat(surface.area) || 0,
+    system: system,
+    layers: [],
+    materials: []
   };
 
-  // Anyagok összesítése és optimalizálása
-  const aggregateResults = (
-    surfaceCalculations: SurfaceCalculation[],
-    sys: SystemProducts
-  ): CalculationResult => {
-    const aggregated: Record<string, { amount: number; unit: string; category: string }> = {};
+  if (system === 'pool') {
+    const totalM2 = result.area;
     
-    // Összesítés
-    surfaceCalculations.forEach(surf => {
-      surf.materials.forEach(mat => {
-        mat.items.forEach(item => {
-          const key = `${item.name}_${item.unit}`;
-          if (!aggregated[key]) {
-            aggregated[key] = { amount: 0, unit: item.unit, category: mat.category };
-          }
-          aggregated[key].amount += item.amount;
-        });
-      });
+    // Arcicem Pool alapozó
+    result.materials.push({
+      category: 'Arcicem Pool gyanta',
+      items: [{ name: 'Arcicem Pool 25L', amount: totalM2 / 200, unit: 'db' }]
     });
     
-    const res: CalculationResult = {
-      items: [],
-      total: 0,
-      layers: [],
-      surfaces: surfaces,
-      totalM2: surfaces.reduce((sum, s) => sum + (parseFloat(s.area) || 0), 0)
-    };
+    // XXL mikrocement
+    const xxlKg = totalM2 * sys.mikrocementek!.xxl.kgPerM2;
+    result.layers.push('2× XXL');
+    result.materials.push({
+      category: 'Aquaciment XXL',
+      items: [{ name: 'Aquaciment XXL 18kg', amount: xxlKg, unit: 'kg' }]
+    });
     
-    // Pool - Arcicem Pool alapozó
-    if (system === 'pool' && aggregated['Arcicem Pool 25L_db']) {
-      const totalDb = Math.ceil(aggregated['Arcicem Pool 25L_db'].amount);
-      res.items.push({
-        cat: 'Arcicem Pool gyanta (összesített)',
-        pkgs: [{ liters: 25, price: 88115, qty: totalDb, name: 'Arcicem Pool 25L' }],
-        price: totalDb * 88115
-      });
-    }
+    // XL mikrocement
+    const xlKg = totalM2 * sys.mikrocementek!.xl.kgPerM2;
+    result.layers.push('1× XL');
+    result.materials.push({
+      category: 'Aquaciment XL',
+      items: [{ name: 'Aquaciment XL 18kg', amount: xlKg, unit: 'kg' }]
+    });
     
-    if (system === 'pool' && aggregated['Aquaciment XXL 18kg_kg']) {
-      const totalKg = aggregated['Aquaciment XXL 18kg_kg'].amount;
-      const pieces = Math.ceil(totalKg / 18);
-      res.items.push({
-        cat: 'Aquaciment XXL (összesített)',
-        pkgs: [{ kg: 18, price: 32480, qty: pieces, name: 'Aquaciment XXL 18kg' }],
-        price: pieces * 32480
-      });
-    }
+    // B komponensek
+    const xxlLiters = xxlKg * 0.3086;
+    const xlLiters = xlKg * 0.408;
+    result.materials.push({
+      category: 'B komponens',
+      items: [
+        { name: 'B komp XXL', amount: xxlLiters, unit: 'L' },
+        { name: 'B komp XL', amount: xlLiters, unit: 'L' }
+      ]
+    });
     
-    if (system === 'pool' && aggregated['Aquaciment XL 18kg_kg']) {
-      const totalKg = aggregated['Aquaciment XL 18kg_kg'].amount;
-      const pieces = Math.ceil(totalKg / 18);
-      res.items.push({
-        cat: 'Aquaciment XL (összesített)',
-        pkgs: [{ kg: 18, price: 42660, qty: pieces, name: 'Aquaciment XL 18kg' }],
-        price: pieces * 42660
-      });
-    }
-    
-    if (system === 'pool' && aggregated['B komp XXL_L']) {
-      const totalLiters = aggregated['B komp XXL_L'].amount;
-      const pieces25L = Math.ceil(totalLiters / 25);
-      res.items.push({
-        cat: 'B komponens XXL (összesített)',
-        pkgs: [{ liters: 25, price: 88115, qty: pieces25L, name: 'B komp XXL 25L' }],
-        price: pieces25L * 88115
-      });
-    }
-    
-    if (system === 'pool' && aggregated['B komp XL_L']) {
-      const totalLiters = aggregated['B komp XL_L'].amount;
-      const pieces25L = Math.ceil(totalLiters / 25);
-      res.items.push({
-        cat: 'B komponens XL (összesített)',
-        pkgs: [{ liters: 25, price: 88030, qty: pieces25L, name: 'B komp XL 25L' }],
-        price: pieces25L * 88030
-      });
-    }
-    
-    if (system === 'pool' && aggregated['Topsealer WT Pool 5L_L']) {
-      const totalLiters = aggregated['Topsealer WT Pool 5L_L'].amount;
-      const pieces = Math.ceil(totalLiters / 5);
-      res.items.push({
-        cat: 'Topsealer WT Pool (összesített)',
-        pkgs: [{ liters: 5, price: 76650, qty: pieces, name: 'Topsealer WT Pool 5L' }],
-        price: pieces * 76650
-      });
-    }
-    
-    // NATTURE - Alapozó
-    if (system === 'natture') {
-      Object.keys(aggregated).forEach(key => {
-        if ((key.includes('Primacem') || key.includes('Primapox') || key.includes('Grip')) && !key.includes('gyanta')) {
-          const [name, unit] = key.split('_');
-          const totalAmount = aggregated[key].amount;
-          
-          const alapozoKey = Object.keys(sys.alapozok).find(k => 
-            sys.alapozok[k].name === name
-          );
-          
-          if (alapozoKey) {
-            const alapozoData = sys.alapozok[alapozoKey];
-            const pkgs = unit === 'm2' 
-              ? optimizeByM2(totalAmount, alapozoData.options)
-              : optimizeByKg(totalAmount, alapozoData.options);
-            
-            res.items.push({
-              cat: `${name} (1 réteg)`,
-              pkgs: pkgs.map(p => ({ 
-                ...p, 
-                name: `${name} ${p.liters || p.kg}${p.liters ? 'L' : 'kg'}`, 
-                qty: p.qty || 0 
-              })),
-              price: pkgs.reduce((s, p) => s + p.price * (p.qty || 0), 0)
-            });
-          }
-        }
-      });
-    }
-    
-    // NATTURE - Mikrocement (XL, L, M, S)
-    (['XL', 'L', 'M', 'S'] as const).forEach(type => {
-      const key = `Natture ${type}`;
-      const matchingKeys = Object.keys(aggregated).filter(k => k.startsWith(key) && !k.includes('gyanta'));
+// WT Pool lakk
+    const lakkM2 = totalM2 * 2;
+    const lakkLiters = lakkM2 * 0.06;
+    result.materials.push({
+      category: 'Topsealer WT Pool',
+      items: [{ name: 'Topsealer WT Pool 5L', amount: lakkLiters, unit: 'L' }]
+    });
+  }
+  
+// NATTURE RENDSZER
+if (system === 'natture') {
+  const totalM2 = result.area;
+  const lakk = surface.lakk;
+  
+  if (!lakk) return result;
+  
+  // Számold össze a rétegeket
+  const totalLayers = surface.layers.xl + surface.layers.l + surface.layers.m + surface.layers.s;
+  if (totalLayers === 0) return result;
+  
+  // Minden réteg típushoz
+  (['xl', 'l', 'm', 's'] as const).forEach(mikroType => {
+    if (surface.layers[mikroType] > 0) {
+      const mikroName = mikroType.toUpperCase();
+      const layerCount = surface.layers[mikroType];
+      result.layers.push(`${layerCount}× ${mikroName}`);
       
-      if (matchingKeys.length > 0 && system === 'natture') {
-        const totalKg = matchingKeys.reduce((sum, k) => sum + aggregated[k].amount, 0);
-        const mikroType = type.toLowerCase() as 'xl' | 'l' | 'm' | 's';
-        const mikroOptions = sys.mikroOptions![mikroType];
-        const pkgs = optimizeByKg(totalKg, mikroOptions);
-        
-        res.items.push({
-          cat: `Natture ${type} (összesített)`,
-          pkgs: pkgs.map(p => ({ ...p, name: `Natture ${type} ${p.kg}kg`, qty: p.qty || 0 })),
-          price: pkgs.reduce((s, p) => s + p.price * (p.qty || 0), 0)
-        });
-      }
+      // Mikrocement kg
+      const mikroData = sys.mikrocementek![mikroType];
+      const mikroKg = totalM2 * layerCount * mikroData.kgPerM2;
+      result.materials.push({
+        category: `Natture ${mikroName}`,
+        items: [{ name: mikroData.name, amount: mikroKg, unit: 'kg' }]
+      });
+      
+      // Gyanta - TÍPUS SZERINT!
+    const gyantaliter = mikroKg * mikroData.literPerKg!;
+    result.materials.push({
+      category: `Natture ${mikroName} gyanta`,
+      items: [{ name: `Natture ${mikroName} gyanta`, amount: gyantaliter, unit: 'L' }]
     });
+    }
+  });    
+
+  // Háló (mindig, 3% ráhagyással)
+const haloKg = totalM2 * 1.03;
+result.materials.push({
+  category: 'Háló',
+  items: [{ name: 'Háló 50gr', amount: haloKg, unit: 'kg' }]
+});
+  }
+  
+  // PreSealer
+  const lakkData = sys.lakkok[lakk];
+  if (lakkData.needPresealer) {
+    const preM2 = totalM2 * 2;
+    result.materials.push({
+      category: 'PreSealer',
+      items: [{ name: 'PreSealer', amount: preM2, unit: 'm2' }]
+    });
+  }
+    // Lakk
+    const lakkLayers = lakkData.needPresealer ? 1 : 2;
+    const lakkM2 = totalM2 * lakkLayers;
+    result.materials.push({
+      category: lakkData.name,
+      items: [{ name: lakkData.name, amount: lakkM2, unit: 'm2' }]
+    });
+  }
+  
+  return result;
+};
+
+// Anyagok összesítése és optimalizálása
+const aggregateResults = (
+  surfaceCalculations: SurfaceCalculation[],
+  sys: SystemProducts
+): CalculationResult => {
+  const aggregated: Record<string, { amount: number; unit: string; category: string }> = {};
+  
+  // Összesítés
+  surfaceCalculations.forEach(surf => {
+    surf.materials.forEach(mat => {
+      mat.items.forEach(item => {
+        const key = `${item.name}_${item.unit}`;
+        if (!aggregated[key]) {
+          aggregated[key] = { amount: 0, unit: item.unit, category: mat.category };
+        }
+        aggregated[key].amount += item.amount;
+      });
+    });
+  });
+  
+  // Kiszerelések optimalizálása és árak
+  const res: CalculationResult = {
+    items: [],
+    total: 0,
+    layers: [],
+    surfaces: surfaces,
+    totalM2: surfaces.reduce((sum, s) => sum + (parseFloat(s.area) || 0), 0)
+  };
+  
+  // Pool - Arcicem Pool alapozó
+  if (system === 'pool' && aggregated['Arcicem Pool 25L_db']) {
+    const totalDb = Math.ceil(aggregated['Arcicem Pool 25L_db'].amount);
+    res.items.push({
+      cat: 'Arcicem Pool gyanta (összesített)',
+      pkgs: [{ liters: 25, price: 88115, qty: totalDb, name: 'Arcicem Pool 25L' }],
+      price: totalDb * 88115
+    });
+  }
+  
+  // Pool - XXL mikrocement
+  if (system === 'pool' && aggregated['Aquaciment XXL 18kg_kg']) {
+    const totalKg = aggregated['Aquaciment XXL 18kg_kg'].amount;
+    const pieces = Math.ceil(totalKg / 18);
+    res.items.push({
+      cat: 'Aquaciment XXL (összesített)',
+      pkgs: [{ kg: 18, price: 32480, qty: pieces, name: 'Aquaciment XXL 18kg' }],
+      price: pieces * 32480
+    });
+  }
+  
+  // Pool - XL mikrocement
+  if (system === 'pool' && aggregated['Aquaciment XL 18kg_kg']) {
+    const totalKg = aggregated['Aquaciment XL 18kg_kg'].amount;
+    const pieces = Math.ceil(totalKg / 18);
+    res.items.push({
+      cat: 'Aquaciment XL (összesített)',
+      pkgs: [{ kg: 18, price: 42660, qty: pieces, name: 'Aquaciment XL 18kg' }],
+      price: pieces * 42660
+    });
+  }
+  
+  // Pool - B komponensek
+  if (system === 'pool' && aggregated['B komp XXL_L']) {
+    const totalLiters = aggregated['B komp XXL_L'].amount;
+    const pieces25L = Math.ceil(totalLiters / 25);
+    res.items.push({
+      cat: 'B komponens XXL (összesített)',
+      pkgs: [{ liters: 25, price: 88115, qty: pieces25L, name: 'B komp XXL 25L' }],
+      price: pieces25L * 88115
+    });
+  }
+  
+  if (system === 'pool' && aggregated['B komp XL_L']) {
+    const totalLiters = aggregated['B komp XL_L'].amount;
+    const pieces25L = Math.ceil(totalLiters / 25);
+    res.items.push({
+      cat: 'B komponens XL (összesített)',
+      pkgs: [{ liters: 25, price: 88030, qty: pieces25L, name: 'B komp XL 25L' }],
+      price: pieces25L * 88030
+    });
+  }
+  
+  // Pool - WT Pool lakk
+  if (system === 'pool' && aggregated['Topsealer WT Pool 5L_L']) {
+    const totalLiters = aggregated['Topsealer WT Pool 5L_L'].amount;
+    const pieces = Math.ceil(totalLiters / 5);
+    res.items.push({
+      cat: 'Topsealer WT Pool (összesített)',
+      pkgs: [{ liters: 5, price: 76650, qty: pieces, name: 'Topsealer WT Pool 5L' }],
+      price: pieces * 76650
+    });
+  }
+  // NATTURE - Mikrocement (XL, L, M, S)
+  (['XL', 'L', 'M', 'S'] as const).forEach(type => {
+    const key = `Natture ${type}`;
+    const matchingKeys = Object.keys(aggregated).filter(k => k.startsWith(key));
     
-    // NATTURE - Gyanta (EGYSÉGES, TELJES MENNYISÉG)
-    if (system === 'natture' && aggregated['Acricem gyanta_L']) {
-      const totalLiters = aggregated['Acricem gyanta_L'].amount;
+    if (matchingKeys.length > 0) {
+      const totalKg = matchingKeys.reduce((sum, k) => sum + aggregated[k].amount, 0);
+      const mikroType = type.toLowerCase() as 'xl' | 'l' | 'm' | 's';
+      const mikroOptions = sys.mikroOptions![mikroType];
+      const pkgs = optimizeByKg(totalKg, mikroOptions);
+      
+      res.items.push({
+        cat: `Natture ${type} (összesített)`,
+        pkgs: pkgs.map(p => ({ ...p, name: `Natture ${type} ${p.kg}kg`, qty: p.qty || 0 })),
+        price: pkgs.reduce((s, p) => s + p.price * (p.qty || 0), 0)
+      });
+    }
+  });
+  
+// NATTURE - Gyanta (típusonként külön)
+if (system === 'natture') {
+  (['XL', 'L', 'M', 'S'] as const).forEach(type => {
+    const gyantaKey = `Natture ${type} gyanta_L`;
+    
+    if (aggregated[gyantaKey]) {
+      const totalLiters = aggregated[gyantaKey].amount;
       const gPkgs = optimizeByLiters(totalLiters, sys.gyanta!);
       
       res.items.push({
-        cat: 'Acricem gyanta (összesített)',
-        pkgs: gPkgs.map(p => ({ ...p, name: `Acricem gyanta ${p.liters}L`, qty: p.qty || 0 })),
+        cat: `Natture ${type} gyanta (összesített)`,
+        pkgs: gPkgs.map(p => ({ ...p, name: `Natture ${type} gyanta ${p.liters}L`, qty: p.qty || 0 })),
         price: gPkgs.reduce((s, p) => s + p.price * (p.qty || 0), 0)
       });
     }
+  });
+}
+  
+  // NATTURE - Háló
+  if (system === 'natture' && aggregated['Háló_kg']) {
+    const totalKg = aggregated['Háló_kg'].amount;
+    const haloPkgs = optimizeByM2(totalKg, sys.halo!);
     
-    // NATTURE - Háló
-    if (system === 'natture' && aggregated['Háló 50gr_m2']) {
-      const totalM2 = aggregated['Háló 50gr_m2'].amount;
-      const haloPkgs = optimizeByM2(totalM2, sys.halo!);
+    res.items.push({
+      cat: 'Háló (összesített)',
+      pkgs: haloPkgs.map(p => ({ ...p, name: `Háló ${p.m2}m²`, qty: p.qty || 0 })),
+      price: haloPkgs.reduce((s, p) => s + p.price * (p.qty || 0), 0)
+    });
+  }
+  
+  // NATTURE - PreSealer
+  if (system === 'natture' && aggregated['PreSealer_m2']) {
+    const totalM2 = aggregated['PreSealer_m2'].amount;
+    const prePkgs = optimizeByM2(totalM2, sys.presealer!);
+    
+    res.items.push({
+      cat: 'PreSealer (összesített)',
+      pkgs: prePkgs.map(p => ({ ...p, name: `PreSealer ${p.liters}L`, qty: p.qty || 0 })),
+      price: prePkgs.reduce((s, p) => s + p.price * (p.qty || 0), 0)
+    });
+  }
+  
+  // NATTURE - Lakkok
+  Object.keys(sys.lakkok).forEach(lakkKey => {
+    const lakkData = sys.lakkok[lakkKey];
+    const matchingKeys = Object.keys(aggregated).filter(k => k.startsWith(lakkData.name));
+    
+    if (matchingKeys.length > 0 && system === 'natture') {
+      const totalM2 = matchingKeys.reduce((sum, k) => sum + aggregated[k].amount, 0);
+      const lakkPkgs = optimizeByM2(totalM2, lakkData.options);
       
       res.items.push({
-        cat: 'Háló (összesített)',
-        pkgs: haloPkgs.map(p => ({ ...p, name: `Háló 50gr ${p.m2}m²`, qty: p.qty || 0 })),
-        price: haloPkgs.reduce((s, p) => s + p.price * (p.qty || 0), 0)
+        cat: `${lakkData.name} (összesített)`,
+        pkgs: lakkPkgs.map(p => ({ ...p, name: `${lakkData.name} ${p.liters}L`, qty: p.qty || 0 })),
+        price: lakkPkgs.reduce((s, p) => s + p.price * (p.qty || 0), 0)
       });
     }
-    
-    // NATTURE - PreSealer
-    if (system === 'natture' && aggregated['PreSealer_m2']) {
-      const totalM2 = aggregated['PreSealer_m2'].amount;
-      const prePkgs = optimizeByM2(totalM2, sys.presealer!);
-      
-      res.items.push({
-        cat: 'PreSealer (2 réteg)',
-        pkgs: prePkgs.map(p => ({ ...p, name: `PreSealer ${p.liters}L`, qty: p.qty || 0 })),
-        price: prePkgs.reduce((s, p) => s + p.price * (p.qty || 0), 0)
-      });
-    }
-    
-    // NATTURE - Lakkok
-    Object.keys(sys.lakkok).forEach(lakkKey => {
-      const lakkData = sys.lakkok[lakkKey];
-      const matchingKeys = Object.keys(aggregated).filter(k => k.startsWith(lakkData.name));
-      
-      if (matchingKeys.length > 0 && system === 'natture') {
-        const totalM2 = matchingKeys.reduce((sum, k) => sum + aggregated[k].amount, 0);
-        const lakkPkgs = optimizeByM2(totalM2, lakkData.options);
-        
-        // Minden lakk 2 réteg!
-        res.items.push({
-          cat: `${lakkData.name} (2 réteg)`,
-          pkgs: lakkPkgs.map(p => ({ ...p, name: `${lakkData.name} ${p.liters}L`, qty: p.qty || 0 })),
-          price: lakkPkgs.reduce((s, p) => s + p.price * (p.qty || 0), 0)
-        });
-      }
+  });
+  res.total = res.items.reduce((sum, item) => sum + item.price, 0);
+  
+  return res;
+};
+
+// Fő számítási függvény
+const calc = () => {
+  if (!validate()) return;
+  
+  // Pool és Natture: Új logika
+  if (system === 'pool' || system === 'natture') {
+    const surfaceCalculations: SurfaceCalculation[] = [];
+    surfaces.filter(s => parseFloat(s.area) > 0).forEach(surface => {
+      const surfaceResult = calculateSurface(surface, sys);
+      surfaceCalculations.push(surfaceResult);
     });
     
-    res.total = res.items.reduce((sum, item) => sum + item.price, 0);
+    const aggregatedResult = aggregateResults(surfaceCalculations, sys);
+    aggregatedResult.layers = surfaceCalculations.map((sc, idx) => 
+      `Felület ${idx + 1} (${sc.area} m²): ${sc.layers.join(', ')}`
+    );
     
-    return res;
+    setResult(aggregatedResult);
+    return;
+  }
+  
+  // RÉGI LOGIKA (Effecto Quartz, Effecto PU)
+  const totalM2 = getTotalArea();
+  const res: CalculationResult = { 
+    items: [], 
+    total: 0, 
+    layers: [], 
+    surfaces: surfaces.filter(s => parseFloat(s.area) > 0), 
+    totalM2 
   };
 
-  // Fő számítási függvény
-  const calc = () => {
-    if (!validate()) return;
-    
-    if (system === 'pool' || system === 'natture') {
-      const surfaceCalculations: SurfaceCalculation[] = [];
+    // EFFECTO QUARTZ
+    if (system === 'effectoQuartz') {
+      const superKg = totalM2 * 2 * sys.padlo!.super.kgPerM2;
+      const superPkgs = optimizeByKg(superKg, sys.padlo!.super.options);
+      res.items.push({
+        cat: 'Super grain (2 réteg)',
+        pkgs: superPkgs.map(p => ({...p, name: `Super ${p.kg}kg`})),
+        price: superPkgs.reduce((s,p) => s+p.price*p.qty!, 0)
+      });
+      res.layers.push('2× Super grain');
+      
+      const mediumKg = totalM2 * 1 * sys.padlo!.medium.kgPerM2;
+      const mediumPkgs = optimizeByKg(mediumKg, sys.padlo!.medium.options);
+      res.items.push({
+        cat: 'Medium grain (1 réteg)',
+        pkgs: mediumPkgs.map(p => ({...p, name: `Medium ${p.kg}kg`})),
+        price: mediumPkgs.reduce((s,p) => s+p.price*p.qty!, 0)
+      });
+      res.layers.push('1× Medium grain');
+    }
+
+    // EFFECTO PU
+    if (system === 'effectoPU') {
+      const puTotals: Record<string, number> = { big: 0, medium: 0, small: 0 };
+      
       surfaces.filter(s => parseFloat(s.area) > 0).forEach(surface => {
-        const surfaceResult = calculateSurface(surface, sys);
-        surfaceCalculations.push(surfaceResult);
+        const surfaceM2 = parseFloat(surface.area);
+        
+        (['big','medium','small'] as const).forEach(t => {
+          if (surface.puLayers[t] > 0) {
+            const mData = sys.mikrocementek![t];
+            const kg = surfaceM2 * surface.puLayers[t] * mData.kgPerM2;
+            puTotals[t] += kg;
+          }
+        });
       });
       
-      const aggregatedResult = aggregateResults(surfaceCalculations, sys);
-      aggregatedResult.layers = surfaceCalculations.map((sc, idx) => 
-        `Felület ${idx + 1} (${sc.area} m²): ${sc.layers.join(', ')}`
-      );
-      
-      setResult(aggregatedResult);
-      return;
+      (['big','medium','small'] as const).forEach(t => {
+        if (puTotals[t] > 0) {
+          const mData = sys.mikrocementek![t];
+          const pkgs = optimizeByKg(puTotals[t], sys.mikroOptions![t]);
+          
+          const totalLayersCount = surfaces
+            .filter(s => parseFloat(s.area) > 0)
+            .reduce((sum, s) => sum + s.puLayers[t], 0);
+          
+          res.items.push({
+            cat: `${mData.name} (${totalLayersCount} réteg összesen)`,
+            pkgs: pkgs.map(p => ({...p, name: `${mData.name} ${p.kg}kg`})),
+            price: pkgs.reduce((s,p) => s+p.price*p.qty!, 0)
+          });
+          res.layers.push(`${totalLayersCount}× ${mData.name}`);
+        }
+      });
     }
+
+    // POOL
+if (system === 'pool') {
+  const xxlKg = totalM2 * sys.mikrocementek!.xxl.kgPerM2;
+  const xxlOptions = sys.mikrocementek!.xxl.options || [];
+  const xxlPieces = xxlOptions[0]?.kg ? Math.ceil(xxlKg / xxlOptions[0].kg) : 0;
+  res.items.push({
+    cat: 'Aquaciment XXL (2 réteg)',
+    pkgs: xxlOptions[0] ? [{...xxlOptions[0], qty: xxlPieces, name: 'Aquaciment XXL 18kg'}] : [],
+    price: xxlOptions[0] ? xxlOptions[0].price * xxlPieces : 0
+  });
+  res.layers.push('2× XXL');
+  
+  const xlKg = totalM2 * sys.mikrocementek!.xl.kgPerM2;
+  const xlOptions = sys.mikrocementek!.xl.options || [];
+  const xlPieces = xlOptions[0]?.kg ? Math.ceil(xlKg / xlOptions[0].kg) : 0;
+  res.items.push({
+    cat: 'Aquaciment XL (1 réteg)',
+    pkgs: xlOptions[0] ? [{...xlOptions[0], qty: xlPieces, name: 'Aquaciment XL 18kg'}] : [],
+    price: xlOptions[0] ? xlOptions[0].price * xlPieces : 0
+  });
+  res.layers.push('1× XL');
+  console.log('XXL kg:', xxlKg);
+console.log('XXL liters:', xxlKg * 0.625);
+console.log('XL kg:', xlKg);
+console.log('XL liters:', xlKg * 0.408);
+  // B komponens - hardcoded számítás
+const xxlLiters = xxlKg * 0.3086;
+const xlLiters = xlKg * 0.408;
+
+// Csak 25L-es kiszerelés, NEM mix!
+const xxl25L = Math.ceil(xxlLiters / 25);
+const xl25L = Math.ceil(xlLiters / 25);
+
+const bPkgs = [];
+if (xxl25L > 0) bPkgs.push({ liters: 25, price: 88115, qty: xxl25L, name: 'B komp XXL 25L' });
+if (xl25L > 0) bPkgs.push({ liters: 25, price: 88030, qty: xl25L, name: 'B komp XL 25L' });
+
+res.items.push({
+  cat: 'B komponens',
+  pkgs: bPkgs,
+  price: bPkgs.reduce((s,p) => s+p.price*p.qty!, 0)
+});
+}
+    // Lakk - felületenkénti számítás, majd összesítés típusonként
+    const lakkTotals: Record<string, number> = {};
     
-    alert('Effecto Quartz és Effecto PU még nincs implementálva az új logikával!');
+    surfaces.filter(s => parseFloat(s.area) > 0).forEach(surface => {
+      const surfaceM2 = parseFloat(surface.area);
+      const lakkType = surface.lakk;
+      
+      if (!lakkTotals[lakkType]) {
+        lakkTotals[lakkType] = 0;
+      }
+      lakkTotals[lakkType] += surfaceM2;
+    });
+    
+    Object.keys(lakkTotals).forEach(lakkType => {
+      const lakkData = sys.lakkok[lakkType];
+      const m2 = lakkTotals[lakkType] * 2;
+      const lakkPkgs = optimizeByM2(m2, lakkData.options);
+      
+      res.items.push({
+        cat: `${lakkData.name} (2 réteg) - ${(m2/2).toFixed(1)} m²`,
+        pkgs: lakkPkgs.map(p => ({
+          ...p, 
+          name: `${lakkData.name} ${p.liters || ''}L`
+        })),
+        price: lakkPkgs.reduce((s,p) => s+p.price*p.qty!, 0)
+      });
+      res.layers.push(`2× ${lakkData.name} (${(m2/2).toFixed(1)} m²)`);
+    });
+
+    res.total = res.items.reduce((s,i) => s+i.price, 0);
+    setResult(res);
   };
 
   const resetCalc = () => {
@@ -480,6 +584,7 @@ export default function Calculator() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-4">
       <div className="max-w-3xl mx-auto">
         <div className="bg-white rounded-3xl shadow-2xl p-6 md:p-8">
+          {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
               Mikrocement Kalkulátor
@@ -494,6 +599,7 @@ export default function Calculator() {
             )}
           </div>
 
+          {/* Error Messages */}
           {errors.length > 0 && (
             <div className="mb-4 p-4 bg-red-50 border-l-4 border-red-500 rounded-lg">
               <h3 className="font-semibold text-red-800 mb-1">Hibák:</h3>
@@ -506,6 +612,7 @@ export default function Calculator() {
           )}
 
           <div className="space-y-5">
+            {/* Rendszer választás */}
             <div>
               <label className="block text-sm font-semibold mb-2 text-gray-700">
                 Mikrocement Rendszer
@@ -534,6 +641,7 @@ export default function Calculator() {
               </select>
             </div>
 
+            {/* Dinamikus Felületek */}
             <div>
               <label className="block text-sm font-semibold mb-3 text-gray-700">
                 Lefedendő Területek
@@ -542,6 +650,7 @@ export default function Calculator() {
               <div className="space-y-4">
                 {surfaces.map((surface, index) => (
                   <div key={surface.id} className="border-2 border-gray-200 rounded-xl p-4 bg-gray-50">
+                    {/* Felület terület */}
                     <div className="flex items-center gap-2 mb-3">
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
@@ -573,6 +682,7 @@ export default function Calculator() {
                       )}
                     </div>
 
+                    {/* Alapozó választás */}
                     {parseFloat(surface.area) > 0 && (
                       <div className="mb-3">
                         <label className="block text-xs font-medium text-gray-600 mb-1">
@@ -596,6 +706,7 @@ export default function Calculator() {
                       </div>
                     )}
 
+                    {/* NATTURE rétegválasztók */}
                     {system === 'natture' && parseFloat(surface.area) > 0 && (
                       <div className="mt-3 pt-3 border-t border-gray-300">
                         <p className="text-xs font-medium text-gray-600 mb-2">
@@ -623,6 +734,35 @@ export default function Calculator() {
                       </div>
                     )}
 
+                    {/* EFFECTO PU rétegválasztók */}
+                    {system === 'effectoPU' && parseFloat(surface.area) > 0 && (
+                      <div className="mt-3 pt-3 border-t border-gray-300">
+                        <p className="text-xs font-medium text-gray-600 mb-2">
+                          Mikrocement rétegek (összesen 3 kell):
+                        </p>
+                        <div className="grid grid-cols-3 gap-2">
+                          {(['big','medium','small'] as const).map(t => (
+                            <div key={t} className="bg-white p-2 rounded-lg border border-gray-200">
+                              <label className="block text-xs font-medium mb-1 text-gray-700">
+                                {sys.mikrocementek![t].name.replace('PU ', '')}
+                              </label>
+                              <select
+                                value={surface.puLayers[t]}
+                                onChange={(e)=>updateSurfacePuLayers(surface.id, t, parseInt(e.target.value))}
+                                className="w-full p-1 text-sm border border-gray-300 rounded focus:border-blue-500 focus:outline-none text-gray-900 font-medium bg-white"
+                              >
+                                {[0,1,2,3].map(n=><option key={n} value={n}>{n}</option>)}
+                              </select>
+                            </div>
+                          ))}
+                        </div>
+                        <p className="mt-2 text-xs text-gray-600">
+                          Összesen: {surface.puLayers.big + surface.puLayers.medium + surface.puLayers.small} / 3 réteg
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Lakk választás */}
                     {parseFloat(surface.area) > 0 && (
                       <div className="mt-3 pt-3 border-t border-gray-300">
                         <label className="block text-xs font-medium text-gray-600 mb-1">
@@ -648,6 +788,7 @@ export default function Calculator() {
                   </div>
                 ))}
                 
+                {/* + Felület gomb */}
                 <button
                   onClick={addSurface}
                   className="w-full flex items-center justify-center gap-2 p-3 border-2 border-dashed border-blue-300 text-blue-600 hover:bg-blue-50 rounded-xl transition font-semibold"
@@ -657,6 +798,7 @@ export default function Calculator() {
                 </button>
               </div>
 
+              {/* Összesítés */}
               {getTotalArea() > 0 && (
                 <div className="mt-3 p-3 bg-blue-50 rounded-lg">
                   <p className="text-sm font-medium text-blue-800">
@@ -666,6 +808,7 @@ export default function Calculator() {
               )}
             </div>
 
+            {/* Számolás gomb */}
             <button
               onClick={calc}
               className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-lg font-bold py-4 rounded-xl shadow-lg transition-all transform hover:scale-[1.02] active:scale-[0.98]"
@@ -673,8 +816,10 @@ export default function Calculator() {
               Kalkuláció Készítése
             </button>
 
+            {/* Eredmények */}
             {result && (
               <div className="mt-6 space-y-4">
+                {/* Felületek összesítése */}
                 <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-4 rounded-xl border-2 border-purple-200">
                   <h3 className="font-bold text-lg mb-2 text-purple-900">Felületek</h3>
                   <div className="space-y-1 text-sm">
@@ -691,6 +836,7 @@ export default function Calculator() {
                   </div>
                 </div>
 
+                {/* Rétegrend */}
                 <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-5 rounded-xl border-2 border-blue-200">
                   <h3 className="font-bold text-lg mb-3 text-blue-900">
                     Rétegrend
@@ -707,6 +853,7 @@ export default function Calculator() {
                   </div>
                 </div>
 
+                {/* Anyagszükséglet */}
                 <div className="bg-gray-50 p-5 rounded-xl border-2 border-gray-200">
                   <h3 className="font-bold text-lg mb-4 text-gray-800">
                     Anyagszükséglet és Árak
@@ -735,6 +882,7 @@ export default function Calculator() {
                     ))}
                   </div>
                   
+                  {/* Végösszeg */}
                   <div className="mt-5 pt-5 border-t-2 border-gray-400">
                     <div className="flex justify-between items-center">
                       <span className="text-xl font-bold text-gray-800">VÉGÖSSZEG:</span>
@@ -752,6 +900,7 @@ export default function Calculator() {
           </div>
         </div>
 
+        {/* Footer */}
         <div className="mt-6 text-center text-sm text-gray-600">
           <p>Topciment Professzionális Mikrocement Rendszerek</p>
           <p className="mt-1">© 2024 - Minden jog fenntartva</p>

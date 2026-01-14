@@ -1,3 +1,27 @@
+export interface SurfaceCalculation {
+  surfaceId: number;
+  area: number;
+  system: MikrocementSystem;
+  layers: string[];
+  materials: {
+    category: string;
+    items: {
+      name: string;
+      amount: number;
+      unit: string;
+    }[];
+  }[];
+}
+
+export interface AggregatedMaterial {
+  name: string;
+  category: string;
+  totalAmount: number;
+  unit: string;
+  packages: ProductOption[];
+  totalPrice: number;
+}
+
 export type MikrocementSystem = 'natture' | 'effectoQuartz' | 'effectoPU' | 'pool';
 
 export interface ProductOption {
