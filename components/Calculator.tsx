@@ -1392,12 +1392,12 @@ export default function Calculator() {
           {/* Logo Banner */}
           <div className="flex justify-center items-center gap-10 mb-1 pb-1 border-b border-gray-200 -mt-4 py-0">
             <img 
-              src="/images/logo1.png" 
+              src="/images/betonstamp-logo.png" 
               alt="BetonStamp" 
               className="h-16 md:h-20 object-contain"
             />
             <img 
-              src="/images/tlogo2.png" 
+              src="/images/topciment-logo.png" 
               alt="Topciment Hungary" 
               className="h-20 md:h-28 object-contain"
             />
