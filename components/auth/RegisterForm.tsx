@@ -142,6 +142,7 @@ export default function RegisterForm({ onSwitch }: RegisterFormProps) {
               phone: formData.phone,
               companyName: formData.isCompany ? formData.companyName : '',
               city: formData.city || '',
+            newsletterConsent: formData.newsletterConsent,
             }),
           });
         } catch (crmError) {

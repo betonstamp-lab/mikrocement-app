@@ -27,7 +27,9 @@ export async function POST(request: NextRequest) {
         Phone: body.phone || '',
         BusinessName: body.companyName || '',
         City: body.city || '',
-        Description: 'Mikrocement Kalkulátor regisztráció',
+        Description: body.newsletterConsent 
+          ? 'Mikrocement Kalkulátor regisztráció - Hírlevélre feliratkozott' 
+          : 'Mikrocement Kalkulátor regisztráció - Hírlevélre NEM iratkozott fel',
       }),
     });
 
