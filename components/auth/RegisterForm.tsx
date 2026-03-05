@@ -70,6 +70,7 @@ export default function RegisterForm({ onSwitch }: RegisterFormProps) {
     city: '',
     address: '',
     gdprAccepted: false,
+    newsletterConsent: false,
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -164,6 +165,8 @@ export default function RegisterForm({ onSwitch }: RegisterFormProps) {
             address: formData.isCompany ? formData.address : null,
             role: 'customer',
             partner_discount: 0,
+            newsletter_consent: formData.newsletterConsent,
+            newsletter_consent_date: formData.newsletterConsent ? new Date().toISOString() : null,
           });
 
         if (profileError) {
@@ -403,6 +406,19 @@ export default function RegisterForm({ onSwitch }: RegisterFormProps) {
             Adatkezelési tájékoztatót
           </a>{' '}
           <span className="text-red-500">*</span>
+        </label>
+      </div>
+<div className="flex items-start gap-2 py-2">
+        <input
+          type="checkbox"
+          id="newsletterConsent"
+          name="newsletterConsent"
+          checked={formData.newsletterConsent}
+          onChange={handleChange}
+          className="w-5 h-5 mt-0.5 text-brand-500 border-gray-300 rounded focus:ring-brand-500"
+        />
+        <label htmlFor="newsletterConsent" className="text-sm text-gray-600">
+          Szeretnék értesülni az akciókról, újdonságokról és szakmai tartalmakról.
         </label>
       </div>
 
