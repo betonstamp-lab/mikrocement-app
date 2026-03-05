@@ -188,6 +188,27 @@ export default function AdatkezelesiTajekoztato() {
               pont), amelyet a regisztráció során a jelölőnégyzet bepipelásakor ad meg.
             </p>
           </section>
+                    {/* 5/B. Hírlevél */}
+          <section>
+            <h3 className="text-lg font-bold text-blue-600 mb-3 border-b border-gray-200 pb-2">
+              5/B. Hírlevél és marketing célú megkeresések
+            </h3>
+            <p className="text-gray-700 leading-relaxed mb-3">
+              A regisztráció során az érintett önkéntes hozzájárulásával feliratkozhat hírlevelünkre.
+              A hírlevél feliratkozás nem feltétele a regisztrációnak vagy az Alkalmazás használatának.
+            </p>
+            <div className="bg-gray-50 rounded-lg p-4 mb-3">
+              <p className="text-gray-700"><strong>Kezelt adatok:</strong> név, e-mail cím</p>
+              <p className="text-gray-700"><strong>Adatkezelés célja:</strong> akciókról, újdonságokról és szakmai tartalmakról szóló tájékoztatás</p>
+              <p className="text-gray-700"><strong>Jogalap:</strong> az érintett hozzájárulása, GDPR 6. cikk (1) a) pont</p>
+              <p className="text-gray-700"><strong>Adatkezelés időtartama:</strong> a hozzájárulás visszavonásáig (leiratkozásig)</p>
+            </div>
+            <p className="text-gray-700 leading-relaxed">
+              Az érintett a hírlevélről bármikor leiratkozhat az info@betonstamp.hu e-mail címre küldött
+              kéréssel, vagy a hírlevelek alján található leiratkozási linkre kattintva. A leiratkozás
+              nem érinti az Alkalmazás használatához való jogosultságot.
+            </p>
+          </section>
 
           {/* 6. Cookie-k */}
           <section>
