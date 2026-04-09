@@ -3,9 +3,127 @@
 import { useState } from 'react';
 import { PRODUCTS } from '@/lib/products';
 import { optimizeByM2, optimizeByKg, optimizeByLiters } from '@/lib/utils';
+import { SHOPRENTER_SKUS, COMPANION_PRODUCTS } from '@/lib/shoprenterskus';
 import { MikrocementSystem, Surface, CalculationResult, SurfaceCalculation, SystemProducts } from '@/types';
 
-export default function Calculator() {
+const Tooltip = ({ text }: { text: string }) => {
+  const [open, setOpen] = useState(false);
+  if (!text) return null;
+  return (
+    <div className="relative inline-block ml-1">
+      <span 
+        onClick={(e) => { e.stopPropagation(); setOpen(!open); }}
+        className="w-4 h-4 inline-flex items-center justify-center text-[10px] font-bold bg-brand-50 text-brand-800 rounded-full cursor-help hover:bg-brand-100 transition border border-brand-300"
+      >?</span>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={(e) => { e.stopPropagation(); setOpen(false); }} />
+          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 bg-gray-800 text-white text-xs rounded-lg shadow-lg z-50 leading-relaxed">
+            {text}
+            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-800"></div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+
+const TooltipSelect = ({ value, onChange, options, placeholder }: {
+  value: string;
+  onChange: (val: string) => void;
+  options: { key: string; name: string; tooltip?: string }[];
+  placeholder: string;
+}) => {
+  const [open, setOpen] = useState(false);
+  const [activeTooltip, setActiveTooltip] = useState<{ text: string; x: number; y: number } | null>(null);
+  const [tooltipReady, setTooltipReady] = useState(false);
+  const selectedLabel = options.find(o => o.key === value)?.name || '';
+
+  const handleTooltipClick = (e: React.MouseEvent | React.TouchEvent, text: string) => {
+    e.stopPropagation();
+    e.preventDefault();
+    const rect = (e.target as HTMLElement).getBoundingClientRect();
+    if (activeTooltip?.text === text) {
+      setActiveTooltip(null);
+      setTooltipReady(false);
+    } else {
+      setActiveTooltip({ text, x: rect.left - 270, y: rect.top - 10 });
+      setTooltipReady(false);
+      setTimeout(() => setTooltipReady(true), 300);
+    }
+  };
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="w-full p-2 text-sm border-2 border-gray-300 rounded-lg focus:border-brand-500 focus:outline-none transition text-gray-900 font-medium bg-white text-left flex items-center justify-between"
+      >
+        <span className={value ? '' : 'text-gray-400'}>{value ? selectedLabel : placeholder}</span>
+        <svg className={`w-4 h-4 text-gray-500 transition-transform ${open ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+        </svg>
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => { setOpen(false); setActiveTooltip(null); setTooltipReady(false); }} />
+          <div className="absolute top-full left-0 right-0 mt-1 bg-white border-2 border-gray-300 rounded-lg shadow-xl z-50 max-h-60 overflow-y-auto">
+            <div
+              onClick={() => { onChange(''); setOpen(false); setActiveTooltip(null); setTooltipReady(false); }}
+              className="px-3 py-2 text-sm text-gray-400 hover:bg-gray-50 cursor-pointer border-b border-gray-100"
+            >
+              {placeholder}
+            </div>
+            {options.map(opt => (
+              <div
+                key={opt.key}
+                onClick={() => { if (!activeTooltip) { onChange(opt.key); setOpen(false); } setActiveTooltip(null); setTooltipReady(false); }}
+                className={`px-3 py-2 text-sm cursor-pointer flex items-center justify-between gap-1 ${
+                  value === opt.key ? 'bg-brand-50 text-brand-700 font-semibold' : 'text-gray-900 hover:bg-gray-50'
+                }`}
+              >
+                <span>{opt.name}</span>
+                {opt.tooltip && (
+                  <span
+                    className="w-4 h-4 inline-flex items-center justify-center text-[10px] font-bold bg-brand-50 text-brand-800 rounded-full cursor-help hover:bg-brand-100 transition border border-brand-300 flex-shrink-0"
+                    onClick={(e) => handleTooltipClick(e, opt.tooltip!)}
+                    onMouseEnter={(e) => {
+                      if (window.matchMedia('(hover: hover)').matches) {
+                        const rect = (e.target as HTMLElement).getBoundingClientRect();
+                        setActiveTooltip({ text: opt.tooltip!, x: rect.left - 270, y: rect.top - 10 });
+                      }
+                    }}
+                    onMouseLeave={() => {
+                      if (window.matchMedia('(hover: hover)').matches) {
+                        setActiveTooltip(null);
+                      }
+                    }}
+                  >?</span>
+                )}
+              </div>
+            ))}
+          </div>
+          {activeTooltip && (
+            <>
+              {tooltipReady && (
+                <div className="fixed inset-0 z-[9998]" onClick={(e) => { e.stopPropagation(); setActiveTooltip(null); setTooltipReady(false); }} />
+              )}
+              <div
+                className="fixed left-4 right-4 sm:left-1/2 sm:-translate-x-1/2 sm:w-72 bottom-20 sm:bottom-auto sm:top-1/2 sm:-translate-y-1/2 p-4 bg-gray-800 text-white text-sm rounded-lg shadow-xl leading-relaxed z-[9999]"
+                onClick={(e) => { e.stopPropagation(); setActiveTooltip(null); setTooltipReady(false); }}
+              >
+                {activeTooltip.text}
+              </div>
+            </>
+          )}
+        </>
+      )}
+    </div>
+  );
+};
+
+export default function Calculator({ profile }: { profile?: { role?: string; partner_discount?: number; name?: string } | null }) {
   const [system, setSystem] = useState<MikrocementSystem>('natture');
   const [surfaces, setSurfaces] = useState<Surface[]>([
     { 
@@ -19,6 +137,92 @@ export default function Calculator() {
   ]);
   const [result, setResult] = useState<CalculationResult | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
+  const [partnerQtyOverrides, setPartnerQtyOverrides] = useState<Record<string, number>>({});
+
+  const isPartner = profile?.role === 'partner';
+  const discountPercent = profile?.partner_discount || 0;
+  const discountMultiplier = 1 - discountPercent / 100;
+  const [cartLoading, setCartLoading] = useState(false);
+  const [cartError, setCartError] = useState<string | null>(null);
+
+  // Csomagnév → SKU kulcs konverzió
+  const getSkuKey = (pkgName: string): string => {
+    // "Natture L 20kg" → "Natture L_20kg"
+    // "Háló 50gr 50m²" → "Háló 50gr_50m2"
+    const lastSpace = pkgName.lastIndexOf(' ');
+    if (lastSpace === -1) return pkgName;
+    const name = pkgName.substring(0, lastSpace);
+    const size = pkgName.substring(lastSpace + 1).replace('m²', 'm2');
+    return `${name}_${size}`;
+  };
+
+  // Kosárba tétel
+  const handleAddToCart = async () => {
+    if (!result) return;
+    
+    setCartLoading(true);
+    setCartError(null);
+
+    // Termékek összegyűjtése SKU-kkal
+    const cartItems: Array<{ sku: string; qty: number; name: string }> = [];
+    const missingSkuItems: string[] = [];
+
+    result.items.forEach((item, idx) => {
+      item.pkgs.forEach((pkg, i) => {
+        const key = `${idx}_${i}`;
+        const effectiveQty = isPartner && partnerQtyOverrides[key] !== undefined 
+          ? partnerQtyOverrides[key] 
+          : (pkg.qty || 0);
+        
+        if (effectiveQty <= 0) return;
+
+        const skuKey = getSkuKey(pkg.name || '');
+        const sku = SHOPRENTER_SKUS[skuKey] || '';
+
+        if (sku) {
+          cartItems.push({ sku, qty: effectiveQty, name: pkg.name || '' });
+          
+          // Kétkomponensű termék: B komponens automatikus hozzáadása
+          const companionKey = COMPANION_PRODUCTS[skuKey];
+          if (companionKey) {
+            const companionSku = SHOPRENTER_SKUS[companionKey] || '';
+            if (companionSku) {
+              cartItems.push({ sku: companionSku, qty: effectiveQty, name: `B komp. (${pkg.name})` });
+            }
+          }
+        } else {
+          missingSkuItems.push(`${effectiveQty}× ${pkg.name}`);
+        }
+      });
+    });
+
+    if (cartItems.length === 0) {
+      setCartError('Egyik termék sem elérhető még a webshopban.');
+      setCartLoading(false);
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/shoprenter/cart', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items: cartItems }),
+      });
+
+      const data = await response.json();
+
+      if (data.redirectUrl) {
+        // Átirányítás a Shoprenter webshopra
+        window.open(data.redirectUrl, '_blank');
+      } else {
+        setCartError('Nem sikerült a kosár létrehozása.');
+      }
+    } catch (err: any) {
+      setCartError('Hiba történt a kosárba helyezés során.');
+    }
+
+    setCartLoading(false);
+  };
 
   const sys = PRODUCTS[system];
 
@@ -122,7 +326,6 @@ export default function Calculator() {
     if (system === 'pool') {
       const totalM2 = result.area;
       
-      // Alapozó/gyanta
       result.layers.push('1× Arcicem Pool gyanta');
       result.materials.push({
         category: 'Arcicem Pool gyanta',
@@ -170,12 +373,10 @@ export default function Calculator() {
       
       if (!lakk) return result;
       
-      // Alapozó
       if (alapozo && sys.alapozok[alapozo]) {
         const alapozoData = sys.alapozok[alapozo];
         const alapozoOption = alapozoData.options[0];
         
-        // Rétegrendhez hozzáadjuk
         result.layers.push(`1× ${alapozoData.name}`);
         
         if (alapozoOption.m2) {
@@ -193,7 +394,6 @@ export default function Calculator() {
         }
       }
       
-      // Háló (mindig, 3% ráhagyással) - KÖZVETLENÜL AZ ALAPOZÓ UTÁN
       const haloM2 = totalM2 * 1.03;
       result.layers.push('1× Háló');
       result.materials.push({
@@ -201,20 +401,16 @@ export default function Calculator() {
         items: [{ name: 'Háló 50gr', amount: haloM2, unit: 'm2' }]
       });
       
-      // Rétegek számítása
       const totalLayers = surface.layers.xl + surface.layers.l + surface.layers.m + surface.layers.s;
       if (totalLayers === 0) return result;
       
-      // Minden réteg típushoz
       (['xl', 'l', 'm', 's'] as const).forEach(mikroType => {
         if (surface.layers[mikroType] > 0) {
           const mikroName = mikroType.toUpperCase();
           const layerCount = surface.layers[mikroType];
           
-          // Rétegrendhez hozzáadjuk a teljes névvel
           result.layers.push(`${layerCount}× Natture ${mikroName}`);
           
-          // Mikrocement kg
           const mikroData = sys.mikrocementek![mikroType];
           const mikroKg = totalM2 * layerCount * mikroData.kgPerM2;
           result.materials.push({
@@ -222,7 +418,6 @@ export default function Calculator() {
             items: [{ name: mikroData.name, amount: mikroKg, unit: 'kg' }]
           });
           
-          // Gyanta - EGYSÉGES KATEGÓRIA!
           const gyantaliter = mikroKg * mikroData.literPerKg!;
           result.materials.push({
             category: 'Acricem gyanta',
@@ -231,10 +426,9 @@ export default function Calculator() {
         }
       });
       
-      // PreSealer (ha ONE Coat vagy Dragon) - 2 RÉTEG!
       const lakkData = sys.lakkok[lakk];
       if (lakkData.needPresealer) {
-        const preM2 = totalM2 * 2; // 2 réteg
+        const preM2 = totalM2 * 2;
         result.layers.push('2× PreSealer');
         result.materials.push({
           category: 'PreSealer',
@@ -242,8 +436,7 @@ export default function Calculator() {
         });
       }
       
-      // Lakk - MINDIG 2 RÉTEG!
-      const lakkM2 = totalM2 * 2; // 2 réteg minden lakknál
+      const lakkM2 = totalM2 * 2;
       result.layers.push(`2× ${lakkData.name}`);
       result.materials.push({
         category: lakkData.name,
@@ -256,11 +449,10 @@ export default function Calculator() {
       const totalM2 = result.area;
       const lakk = surface.lakk;
       const alapozo = surface.alapozo;
-      const surfaceType = surface.surfaceType || 'padlo'; // padlo vagy fal
+      const surfaceType = surface.surfaceType || 'padlo';
       
       if (!lakk) return result;
       
-      // Alapozó - hozzáadjuk a rétegrendhez
       if (alapozo && sys.alapozok[alapozo]) {
         const alapozoData = sys.alapozok[alapozo];
         result.layers.push(`1× ${alapozoData.name}`);
@@ -282,9 +474,7 @@ export default function Calculator() {
         }
       }
       
-      // Mikrocement - Padló vagy Fal
       if (surfaceType === 'padlo') {
-        // 2× Super/Medium (vastagabb) + 1× Big/Small (vékonyabb)
         const vastagabb = surface.quartzPadloVastagabb || 'super';
         const vekonyabb = surface.quartzPadloVekonyabb || 'medium';
         
@@ -306,7 +496,6 @@ export default function Calculator() {
           items: [{ name: vekonyabbData.name, amount: vekonyabbKg, unit: 'kg' }]
         });
       } else {
-        // Fal: 2× Big (vastagabb) + 1× Small (vékonyabb)
         const vastagabb = surface.quartzFalVastagabb || 'big';
         const vekonyabb = surface.quartzFalVekonyabb || 'small';
         
@@ -329,7 +518,6 @@ export default function Calculator() {
         });
       }
       
-      // Lakk - MINDIG 2 RÉTEG! - hozzáadjuk a rétegrendhez
       const lakkData = sys.lakkok[lakk];
       result.layers.push(`2× ${lakkData.name}`);
       
@@ -348,7 +536,6 @@ export default function Calculator() {
       
       if (!lakk) return result;
       
-      // Alapozó - hozzáadjuk a rétegrendhez
       if (alapozo && sys.alapozok[alapozo]) {
         const alapozoData = sys.alapozok[alapozo];
         result.layers.push(`1× ${alapozoData.name}`);
@@ -370,7 +557,6 @@ export default function Calculator() {
         }
       }
       
-      // Mikrocement - 3 réteg mindig (kgPerM2 már tartalmazza a 3 réteget)
       const totalPuLayers = surface.puLayers.big + surface.puLayers.medium + surface.puLayers.small;
       if (totalPuLayers === 0) return result;
       
@@ -381,7 +567,6 @@ export default function Calculator() {
           result.layers.push(`${layerCount}× Efectto PU ${puName}`);
           
           const puData = sys.mikrocementek![puType];
-          // kgPerM2 = 3 rétegre, tehát 1 rétegre = kgPerM2 / 3
           const kgPerLayer = puData.kgPerM2 / 3;
           const puKg = totalM2 * layerCount * kgPerLayer;
           
@@ -392,7 +577,6 @@ export default function Calculator() {
         }
       });
       
-      // Lakk - MINDIG 2 RÉTEG! - hozzáadjuk a rétegrendhez
       const lakkData = sys.lakkok[lakk];
       result.layers.push(`2× ${lakkData.name}`);
       
@@ -413,7 +597,6 @@ export default function Calculator() {
   ): CalculationResult => {
     const aggregated: Record<string, { amount: number; unit: string; category: string }> = {};
     
-    // Összesítés
     surfaceCalculations.forEach(surf => {
       surf.materials.forEach(mat => {
         mat.items.forEach(item => {
@@ -426,8 +609,8 @@ export default function Calculator() {
       });
     });
     
-    console.log('🔑 AGGREGATED KEYS:', Object.keys(aggregated));
-    console.log('📦 AGGREGATED OBJECT:', aggregated);
+    console.log('🔍 AGGREGATED KEYS:', Object.keys(aggregated));
+    console.log('📋 AGGREGATED OBJECT:', aggregated);
     
     const res: CalculationResult = {
       items: [],
@@ -504,7 +687,6 @@ export default function Calculator() {
           const [name, unit] = key.split('_');
           const totalAmount = aggregated[key].amount;
           
-          // Keressük meg melyik alapozó neve egyezik
           const alapozoKey = Object.keys(sys.alapozok).find(k => {
             const alapozo = sys.alapozok[k];
             return alapozo && alapozo.name === name;
@@ -551,7 +733,7 @@ export default function Calculator() {
       }
     });
     
-    // NATTURE - Gyanta (EGYSÉGES, TELJES MENNYISÉG)
+    // NATTURE - Gyanta
     if (system === 'natture' && aggregated['Acricem gyanta_L']) {
       const totalLiters = aggregated['Acricem gyanta_L'].amount;
       const gPkgs = optimizeByLiters(totalLiters, sys.gyanta!);
@@ -705,7 +887,7 @@ export default function Calculator() {
       });
     }
     
-    // EFFECTO PU - Alapozó (JAVÍTOTT - undefined check hozzáadva!)
+    // EFFECTO PU - Alapozó
     if (system === 'effectoPU') {
       Object.keys(aggregated).forEach(key => {
         if ((key.includes('Primacem') || key.includes('Primapox') || key.includes('Grip')) && !key.includes('gyanta')) {
@@ -797,7 +979,6 @@ export default function Calculator() {
     const items: Array<{ cat: string; pkgs: any[]; price: number; needed: number; got: number; leftover: number; unit: string }> = [];
     let total = 0;
 
-    // Anyagok összegyűjtése kategóriánként
     const materialsByCategory: Record<string, { amount: number; unit: string; name: string }> = {};
     
     surfaceCalc.materials.forEach(mat => {
@@ -826,7 +1007,6 @@ export default function Calculator() {
             if (alapozoData && alapozoData.options) {
               const firstOption = alapozoData.options[0];
               
-              // Ellenőrizzük, hogy kg vagy liter alapú az alapozó
               const isKgBased = firstOption.kg !== undefined;
               
               const pkgs = isKgBased
@@ -836,7 +1016,6 @@ export default function Calculator() {
               const price = pkgs.reduce((s, p) => s + p.price * (p.qty || 0), 0);
               
               if (isKgBased) {
-                // Primapox 100 Barrier - kg alapú
                 const gotKg = pkgs.reduce((sum, p) => sum + (p.kg || 0) * (p.qty || 0), 0);
                 const kgPerM2 = firstOption.kg! / firstOption.m2!;
                 const neededKg = mat.amount * kgPerM2;
@@ -851,7 +1030,6 @@ export default function Calculator() {
                   unit: 'kg'
                 });
               } else {
-                // Primacem ABS/Plusz/Grip - liter alapú
                 const gotLiters = pkgs.reduce((sum, p) => sum + (p.liters || 0) * (p.qty || 0), 0);
                 const litersPerM2 = firstOption.liters && firstOption.m2 ? firstOption.liters / firstOption.m2 : 0;
                 const neededLiters = mat.amount * litersPerM2;
@@ -938,7 +1116,6 @@ export default function Calculator() {
         const mat = materialsByCategory['PreSealer'];
         const pkgs = optimizeByM2(mat.amount, sys.presealer!);
         
-        // Literben számolunk maradékot
         const gotLiters = pkgs.reduce((sum, p) => sum + (p.liters || 0) * (p.qty || 0), 0);
         const firstOption = sys.presealer![0];
         const litersPerM2 = firstOption.liters && firstOption.m2 ? firstOption.liters / firstOption.m2 : 0;
@@ -965,7 +1142,6 @@ export default function Calculator() {
           const mat = materialsByCategory[lakkData.name];
           const pkgs = optimizeByM2(mat.amount, lakkData.options);
           
-          // Literben számolunk maradékot
           const gotLiters = pkgs.reduce((sum, p) => sum + (p.liters || 0) * (p.qty || 0), 0);
           const firstOption = lakkData.options[0];
           const litersPerM2 = firstOption.liters && firstOption.m2 ? firstOption.liters / firstOption.m2 : 0;
@@ -989,7 +1165,6 @@ export default function Calculator() {
 
     // EFECTTO QUARTZ rendszer
     if (system === 'effectoQuartz') {
-      // Alapozó
       Object.keys(materialsByCategory).forEach(cat => {
         if (cat === 'Alapozó') {
           const mat = materialsByCategory[cat];
@@ -1002,8 +1177,6 @@ export default function Calculator() {
             const alapozoData = sys.alapozok[alapozoKey];
             if (alapozoData && alapozoData.options) {
               const firstOption = alapozoData.options[0];
-              
-              // Ellenőrizzük, hogy kg vagy liter alapú az alapozó
               const isKgBased = firstOption.kg !== undefined;
               
               const pkgs = isKgBased
@@ -1013,7 +1186,6 @@ export default function Calculator() {
               const price = pkgs.reduce((s, p) => s + p.price * (p.qty || 0), 0);
               
               if (isKgBased) {
-                // Primapox 100 Barrier - kg alapú
                 const gotKg = pkgs.reduce((sum, p) => sum + (p.kg || 0) * (p.qty || 0), 0);
                 const kgPerM2 = firstOption.kg! / firstOption.m2!;
                 const neededKg = mat.amount * kgPerM2;
@@ -1028,7 +1200,6 @@ export default function Calculator() {
                   unit: 'kg'
                 });
               } else {
-                // Primacem ABS/Plusz/Grip - liter alapú
                 const gotLiters = pkgs.reduce((sum, p) => sum + (p.liters || 0) * (p.qty || 0), 0);
                 const litersPerM2 = firstOption.liters && firstOption.m2 ? firstOption.liters / firstOption.m2 : 0;
                 const neededLiters = mat.amount * litersPerM2;
@@ -1049,7 +1220,6 @@ export default function Calculator() {
         }
       });
 
-      // Padló mikrocementek
       if (sys.padlo) {
         (['super', 'medium'] as const).forEach(padloType => {
           const padloData = sys.padlo![padloType];
@@ -1073,7 +1243,6 @@ export default function Calculator() {
         });
       }
 
-      // Fal mikrocementek
       if (sys.fal) {
         (['big', 'small'] as const).forEach(falType => {
           const falData = sys.fal![falType];
@@ -1097,14 +1266,12 @@ export default function Calculator() {
         });
       }
 
-      // Lakkok
       Object.keys(sys.lakkok).forEach(lakkKey => {
         const lakkData = sys.lakkok[lakkKey];
         if (lakkData && materialsByCategory[lakkData.name]) {
           const mat = materialsByCategory[lakkData.name];
           const pkgs = optimizeByM2(mat.amount, lakkData.options);
           
-          // Literben számolunk maradékot
           const gotLiters = pkgs.reduce((sum, p) => sum + (p.liters || 0) * (p.qty || 0), 0);
           const firstOption = lakkData.options[0];
           const litersPerM2 = firstOption.liters && firstOption.m2 ? firstOption.liters / firstOption.m2 : 0;
@@ -1128,7 +1295,6 @@ export default function Calculator() {
 
     // EFECTTO PU rendszer
     if (system === 'effectoPU') {
-      // Alapozó
       Object.keys(materialsByCategory).forEach(cat => {
         if (cat === 'Alapozó') {
           const mat = materialsByCategory[cat];
@@ -1144,7 +1310,6 @@ export default function Calculator() {
                 ? optimizeByM2(mat.amount, alapozoData.options)
                 : optimizeByKg(mat.amount, alapozoData.options);
               
-              // Literben számolunk maradékot
               const gotLiters = pkgs.reduce((sum, p) => sum + (p.liters || 0) * (p.qty || 0), 0);
               const firstOption = alapozoData.options[0];
               const litersPerM2 = firstOption.liters && firstOption.m2 ? firstOption.liters / firstOption.m2 : 0;
@@ -1167,7 +1332,6 @@ export default function Calculator() {
         }
       });
 
-      // Mikrocementek
       (['big', 'medium', 'small'] as const).forEach(puType => {
         const puData = sys.mikrocementek![puType];
         if (puData && materialsByCategory[`Efectto PU ${puType.toUpperCase()}`]) {
@@ -1189,14 +1353,12 @@ export default function Calculator() {
         }
       });
 
-      // Lakkok
       Object.keys(sys.lakkok).forEach(lakkKey => {
         const lakkData = sys.lakkok[lakkKey];
         if (lakkData && materialsByCategory[lakkData.name]) {
           const mat = materialsByCategory[lakkData.name];
           const pkgs = optimizeByM2(mat.amount, lakkData.options);
           
-          // Literben számolunk maradékot
           const gotLiters = pkgs.reduce((sum, p) => sum + (p.liters || 0) * (p.qty || 0), 0);
           const firstOption = lakkData.options[0];
           const litersPerM2 = firstOption.liters && firstOption.m2 ? firstOption.liters / firstOption.m2 : 0;
@@ -1220,7 +1382,6 @@ export default function Calculator() {
 
     // POOL rendszer
     if (system === 'pool') {
-      // Pool-nak egyszerűbb logika kell
       if (materialsByCategory['Arcicem Pool gyanta']) {
         const mat = materialsByCategory['Arcicem Pool gyanta'];
         const needed = mat.amount;
@@ -1232,8 +1393,8 @@ export default function Calculator() {
           cat: 'Arcicem Pool gyanta',
           pkgs: [{ liters: 25, price: 88115, qty, name: 'Arcicem Pool 25L' }],
           price,
-          needed: needed * 25, // literben
-          got: got * 25, // literben
+          needed: needed * 25,
+          got: got * 25,
           leftover: (got - needed) * 25,
           unit: 'L'
         });
@@ -1277,7 +1438,6 @@ export default function Calculator() {
       }
 
       if (materialsByCategory['B komponens']) {
-        // B komponens külön XXL és XL
         const bItems = surfaceCalc.materials.find(m => m.category === 'B komponens')?.items || [];
         bItems.forEach(item => {
           const qty = Math.ceil(item.amount / 25);
@@ -1325,17 +1485,15 @@ export default function Calculator() {
     
     console.log('🚀🚀🚀 CALC START V5 - System:', system);
     
-    // Minden rendszer ugyanazt a logikát használja
     const surfaceCalculations: SurfaceCalculation[] = [];
     surfaces.filter(s => parseFloat(s.area) > 0).forEach(surface => {
       const surfaceResult = calculateSurface(surface, sys);
-      console.log('📊 Surface Result:', surfaceResult);
+      console.log('📐 Surface Result:', surfaceResult);
       surfaceCalculations.push(surfaceResult);
     });
     
-    console.log('📦 All Surface Calculations:', surfaceCalculations);
+    console.log('📋 All Surface Calculations:', surfaceCalculations);
     
-    // Felületenkénti optimalizálás
     const surfaceResults = surfaceCalculations.map((sc, idx) => {
       const optimized = optimizeSurfaceMaterials(sc, sys);
       return {
@@ -1346,13 +1504,11 @@ export default function Calculator() {
       };
     });
     
-    // Összesített optimalizálás (az eredeti aggregateResults)
     const aggregatedResult = aggregateResults(surfaceCalculations, sys);
     
     console.log('✅ Aggregated Result:', aggregatedResult);
-    console.log('🎯 Layers:', aggregatedResult.layers);
+    console.log('🎨 Layers:', aggregatedResult.layers);
     
-    // Rétegrend: minden felület külön, minden réteg új sorban
     const allLayers: string[] = [];
     surfaceCalculations.forEach((sc, idx) => {
       if (surfaceCalculations.length > 1) {
@@ -1366,9 +1522,10 @@ export default function Calculator() {
     aggregatedResult.layers = allLayers;
     aggregatedResult.surfaceResults = surfaceResults;
     
-    console.log('🎯 Final Layers:', aggregatedResult.layers);
-    console.log('📊 Surface Results:', surfaceResults);
+    console.log('🎨 Final Layers:', aggregatedResult.layers);
+    console.log('📐 Surface Results:', surfaceResults);
     
+    setPartnerQtyOverrides({});
     setResult(aggregatedResult);
   };
 
@@ -1383,6 +1540,7 @@ export default function Calculator() {
     }]);
     setResult(null);
     setErrors([]);
+    setPartnerQtyOverrides({});
   };
 
   return (
@@ -1433,10 +1591,11 @@ export default function Calculator() {
               <label className="block text-sm font-semibold mb-2 text-gray-700">
                 Mikrocement Rendszer
               </label>
-              <select
+              <TooltipSelect
                 value={system}
-                onChange={(e) => {
-                  setSystem(e.target.value as MikrocementSystem);
+                onChange={(val) => {
+                  if (!val) return;
+                  setSystem(val as MikrocementSystem);
                   setSurfaces([{ 
                     id: 1, 
                     area: '',
@@ -1448,13 +1607,14 @@ export default function Calculator() {
                   setResult(null);
                   setErrors([]);
                 }}
-                className="w-full p-3 border-2 border-gray-300 rounded-xl focus:border-brand-500 focus:outline-none transition text-gray-900 font-medium bg-white"
-              >
-                <option value="natture">Natture</option>
-                <option value="effectoQuartz">Efectto Quartz</option>
-                <option value="effectoPU">Efectto PU</option>
-                <option value="pool">Pool</option>
-              </select>
+                placeholder="Válassz rendszert..."
+                options={[
+                  { key: 'natture', name: 'Natture', tooltip: PRODUCTS.natture.tooltip },
+                  { key: 'effectoQuartz', name: 'Efectto Quartz', tooltip: PRODUCTS.effectoQuartz.tooltip },
+                  { key: 'effectoPU', name: 'Efectto PU', tooltip: PRODUCTS.effectoPU.tooltip },
+                  { key: 'pool', name: 'Pool', tooltip: PRODUCTS.pool.tooltip },
+                ]}
+              />
             </div>
 
             <div>
@@ -1501,16 +1661,16 @@ export default function Calculator() {
                         <label className="block text-xs font-medium text-gray-600 mb-1">
                           Alapozó (1 réteg):
                         </label>
-                        <select 
-                          value={surface.alapozo} 
-                          onChange={(e) => updateSurface(surface.id, 'alapozo', e.target.value)}
-                          className="w-full p-2 text-sm border-2 border-gray-300 rounded-lg focus:border-brand-500 focus:outline-none transition text-gray-900 font-medium bg-white"
-                        >
-                          <option value="">Válassz alapozót...</option>
-                          {Object.keys(sys.alapozok).map(k => (
-                            <option key={k} value={k}>{sys.alapozok[k].name}</option>
-                          ))}
-                        </select>
+                        <TooltipSelect
+                          value={surface.alapozo}
+                          onChange={(val) => updateSurface(surface.id, 'alapozo', val)}
+                          placeholder="Válassz alapozót..."
+                          options={Object.keys(sys.alapozok).map(k => ({
+                            key: k,
+                            name: sys.alapozok[k].name,
+                            tooltip: sys.alapozok[k].tooltip
+                          }))}
+                        />
                         {surface.alapozo && sys.alapozok[surface.alapozo].info && (
                           <p className="mt-1 text-xs text-gray-500">
                             {sys.alapozok[surface.alapozo].info}
@@ -1527,8 +1687,11 @@ export default function Calculator() {
                         <div className="grid grid-cols-4 gap-2">
                           {(['xl','l','m','s'] as const).map(t => (
                             <div key={t} className="bg-white p-2 rounded-lg border border-gray-200">
-                              <label className="block text-xs font-medium mb-1 text-gray-700">
+                              <label className="block text-xs font-medium mb-1 text-gray-700 flex items-center">
                                 {sys.mikrocementek![t].name.replace('Natture ', '')}
+                                {sys.mikrocementek![t].tooltip && (
+                                  <Tooltip text={sys.mikrocementek![t].tooltip!} />
+                                )}
                               </label>
                               <select
                                 value={surface.layers[t]}
@@ -1567,10 +1730,10 @@ export default function Calculator() {
                             </p>
                             <div className="bg-brand-50 p-3 rounded-lg">
                               <p className="text-xs text-brand-800">
-                                ✓ 2 réteg Big grain (vastagabb)
+                                ✔ 2 réteg Big grain (vastagabb)
                               </p>
                               <p className="text-xs text-brand-800">
-                                ✓ 1 réteg Small grain (vékonyabb)
+                                ✔ 1 réteg Small grain (vékonyabb)
                               </p>
                             </div>
                           </div>
@@ -1581,10 +1744,10 @@ export default function Calculator() {
                             </p>
                             <div className="bg-brand-50 p-3 rounded-lg">
                               <p className="text-xs text-brand-800">
-                                ✓ 2 réteg Super grain (vastagabb)
+                                ✔ 2 réteg Super grain (vastagabb)
                               </p>
                               <p className="text-xs text-brand-800">
-                                ✓ 1 réteg Medium grain (vékonyabb)
+                                ✔ 1 réteg Medium grain (vékonyabb)
                               </p>
                             </div>
                           </div>
@@ -1600,8 +1763,11 @@ export default function Calculator() {
                         <div className="grid grid-cols-3 gap-2">
                           {(['big', 'medium', 'small'] as const).map(t => (
                             <div key={t} className="bg-white p-2 rounded-lg border border-gray-200">
-                              <label className="block text-xs font-medium mb-1 text-gray-700">
+                              <label className="block text-xs font-medium mb-1 text-gray-700 flex items-center">
                                 {t === 'big' ? 'Big grain' : t === 'medium' ? 'Medium grain' : 'Small grain'}
+                                {sys.mikrocementek![t]?.tooltip && (
+                                  <Tooltip text={sys.mikrocementek![t].tooltip!} />
+                                )}
                               </label>
                               <select
                                 value={surface.puLayers[t]}
@@ -1624,16 +1790,16 @@ export default function Calculator() {
                         <label className="block text-xs font-medium text-gray-600 mb-1">
                           Lakk (2 réteg):
                         </label>
-                        <select 
-                          value={surface.lakk} 
-                          onChange={(e) => updateSurface(surface.id, 'lakk', e.target.value)}
-                          className="w-full p-2 text-sm border-2 border-gray-300 rounded-lg focus:border-brand-500 focus:outline-none transition text-gray-900 font-medium bg-white"
-                        >
-                          <option value="">Válassz lakkot...</option>
-                          {Object.keys(sys.lakkok).map(k => (
-                            <option key={k} value={k}>{sys.lakkok[k].name}</option>
-                          ))}
-                        </select>
+                        <TooltipSelect
+                          value={surface.lakk}
+                          onChange={(val) => updateSurface(surface.id, 'lakk', val)}
+                          placeholder="Válassz lakkot..."
+                          options={Object.keys(sys.lakkok).map(k => ({
+                            key: k,
+                            name: sys.lakkok[k].name,
+                            tooltip: sys.lakkok[k].tooltip
+                          }))}
+                        />
                         {surface.lakk && sys.lakkok[surface.lakk].info && (
                           <p className="mt-1 text-xs text-gray-500">
                             {sys.lakkok[surface.lakk].info}
@@ -1681,9 +1847,8 @@ export default function Calculator() {
                       let layerCounter = 0;
                       
                       result.layers.forEach((l, i) => {
-                        // Ha ez egy felület cím (tartalmazza a "Felület" szót és "m²"-t)
                         if (l.includes('Felület') && l.includes('m²')) {
-                          layerCounter = 0; // Újrakezdjük a számozást
+                          layerCounter = 0;
                           elements.push(
                             <div key={`title-${i}`} className={`font-bold text-gray-800 ${i > 0 ? 'mt-4 pt-4 border-t border-brand-200' : ''}`}>
                               {l}
@@ -1750,61 +1915,114 @@ export default function Calculator() {
                       Összesített anyagszükséglet (optimalizálva)
                     </h4>
                     
-                    {/* Fejléc - rejtett mobilon */}
                     <div className="hidden md:flex justify-end gap-2 mb-2 text-xs font-semibold text-gray-500 border-b pb-2">
                    
                     </div>
                     
                     <div className="space-y-4">
                       {result.items.map((item, idx) => {
-                        // Maradék érték kiszámítása az összesített maradékból
+                        // Maradék érték kiszámítása az ÖSSZESÍTETT csomagokból
                         let leftoverValue = 0;
                         if (result.surfaceResults) {
+                          const itemCatClean = item.cat.replace(' (1 réteg)', '').replace(' (2 réteg)', '').replace(' (összesített)', '');
+                          
+                          let totalNeeded = 0;
                           result.surfaceResults.forEach((sr: any) => {
                             sr.items.forEach((srItem: any) => {
-                              const srCatClean = srItem.cat.replace(' (1 réteg)', '').replace(' (2 réteg)', '').replace(' (összesített)', '');
-                              const itemCatClean = item.cat.replace(' (1 réteg)', '').replace(' (2 réteg)', '').replace(' (összesített)', '');
-                              
+                              const srCatClean = srItem.cat.replace(' (1 réteg)', '').replace(' (2 réteg)', '');
                               if (srCatClean === itemCatClean || itemCatClean.includes(srCatClean) || srCatClean.includes(itemCatClean)) {
-                                // Egységár számítása: csomag ár / csomag mennyiség
-                                if (srItem.pkgs && srItem.pkgs.length > 0 && srItem.leftover > 0) {
-                                  const pkg = srItem.pkgs[0];
-                                  const pkgSize = pkg.liters || pkg.kg || pkg.m2 || 1;
-                                  const unitPrice = pkg.price / pkgSize;
-                                  leftoverValue += srItem.leftover * unitPrice;
-                                }
+                                totalNeeded += srItem.needed;
                               }
                             });
                           });
+                          
+                          let gotAmount = 0;
+                          if (item.pkgs && item.pkgs.length > 0) {
+                            item.pkgs.forEach((pkg: any) => {
+                              const pkgSize = pkg.liters || pkg.kg || pkg.m2 || 0;
+                              gotAmount += pkgSize * (pkg.qty || 0);
+                            });
+                          }
+                          
+                          const leftover = gotAmount - totalNeeded;
+                          if (leftover > 0.01 && item.pkgs.length > 0) {
+                            const pkg = item.pkgs[0];
+                            const pkgSize = pkg.liters || pkg.kg || pkg.m2 || 1;
+                            const unitPrice = pkg.price / pkgSize;
+                            leftoverValue = leftover * unitPrice;
+                          }
                         }
                         
                         const nettoPrice = item.price - leftoverValue;
+                        
+                        // Partner: módosított mennyiségekkel számolt ár
+                        let partnerItemPrice = 0;
+                        if (isPartner) {
+                          item.pkgs.forEach((pkg, i) => {
+                            const key = `${idx}_${i}`;
+                            const effectiveQty = partnerQtyOverrides[key] !== undefined ? partnerQtyOverrides[key] : (pkg.qty || 0);
+                            partnerItemPrice += pkg.price * effectiveQty;
+                          });
+                        }
                         
                         return (
                           <div key={idx} className="pb-4 border-b last:border-0 border-gray-300">
                             <h4 className="font-semibold mb-2 text-gray-800">{item.cat}</h4>
                             <div className="space-y-1">
-                              {item.pkgs.map((pkg, i) => (
-                                <div key={i} className="flex justify-between text-sm text-gray-700">
-                                  <span className="flex-1 min-w-0 pr-2">
-                                    {pkg.qty}× {pkg.name}
-                                  </span>
-                                  <span className="font-medium whitespace-nowrap">
-                                    {(pkg.price * pkg.qty!).toLocaleString('hu-HU')} Ft
-                                  </span>
-                                </div>
-                              ))}
+                              {item.pkgs.map((pkg, i) => {
+                                const key = `${idx}_${i}`;
+                                const effectiveQty = isPartner && partnerQtyOverrides[key] !== undefined ? partnerQtyOverrides[key] : (pkg.qty || 0);
+                                
+                                return (
+                                  <div key={i} className="flex justify-between items-center text-sm text-gray-700">
+                                    <span className="flex-1 min-w-0 pr-2 flex items-center gap-1">
+                                      {isPartner ? (
+                                        <input
+                                          type="number"
+                                          min="0"
+                                          value={effectiveQty}
+                                          onChange={(e) => {
+                                            const newQty = Math.max(0, parseInt(e.target.value) || 0);
+                                            setPartnerQtyOverrides(prev => ({ ...prev, [key]: newQty }));
+                                          }}
+                                          className="w-12 p-1 text-center border border-green-400 rounded bg-green-50 font-semibold text-green-800 focus:border-green-600 focus:outline-none"
+                                        />
+                                      ) : (
+                                        <span>{effectiveQty}</span>
+                                      )}
+                                      <span>× {pkg.name}</span>
+                                    </span>
+                                    <span className="font-medium whitespace-nowrap">
+                                      {(pkg.price * effectiveQty).toLocaleString('hu-HU')} Ft
+                                    </span>
+                                  </div>
+                                );
+                              })}
                             </div>
-                            {/* Részösszeg - mobilon egymás alatt, desktopon egymás mellett */}
                             <div className="mt-2 pt-2 border-t border-gray-300 text-sm">
-                              <div className="flex justify-between font-semibold">
-                                <span className="text-gray-600">Kiszerelés szerint:</span>
-                                <span className="text-brand-600">{item.price.toLocaleString('hu-HU')} Ft</span>
-                              </div>
-                              <div className="flex justify-between font-semibold mt-1">
-                                <span className="text-gray-600">Anyagszükséglet szerint:</span>
-                                <span className="text-green-600">{Math.round(nettoPrice).toLocaleString('hu-HU')} Ft</span>
-                              </div>
+                              {isPartner ? (
+                                <>
+                                  <div className="flex justify-between font-semibold">
+                                    <span className="text-gray-600">Listaár:</span>
+                                    <span className="text-gray-400 line-through">{partnerItemPrice.toLocaleString('hu-HU')} Ft</span>
+                                  </div>
+                                  <div className="flex justify-between font-semibold mt-1">
+                                    <span className="text-green-700">Partneri ár ({discountPercent}% kedvezmény):</span>
+                                    <span className="text-green-600 font-bold">{Math.round(partnerItemPrice * discountMultiplier).toLocaleString('hu-HU')} Ft</span>
+                                  </div>
+                                </>
+                              ) : (
+                                <>
+                                  <div className="flex justify-between font-semibold">
+                                    <span className="text-gray-600">Kiszerelés szerint:</span>
+                                    <span className="text-brand-600">{item.price.toLocaleString('hu-HU')} Ft</span>
+                                  </div>
+                                  <div className="flex justify-between font-semibold mt-1">
+                                    <span className="text-gray-600">Anyagszükséglet szerint:</span>
+                                    <span className="text-green-600">{Math.round(nettoPrice).toLocaleString('hu-HU')} Ft</span>
+                                  </div>
+                                </>
+                              )}
                             </div>
                           </div>
                         );
@@ -1813,46 +2031,110 @@ export default function Calculator() {
                   </div>
                   
                   <div className="mt-5 pt-5 border-t-2 border-gray-400">
-                    {/* Végösszeg - mobilon egymás alatt */}
                     <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
                       <span className="text-xl font-bold text-gray-800">VÉGÖSSZEG:</span>
-                      <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
-                        <div className="flex justify-between sm:block sm:text-right">
-                          <span className="text-xs text-gray-500 sm:block">Kiszerelés szerint</span>
-                          <span className="text-lg sm:text-xl font-bold text-brand-600">
-                            {result.total.toLocaleString('hu-HU')} Ft
-                          </span>
-                        </div>
-                        <div className="flex justify-between sm:block sm:text-right">
-                          <span className="text-xs text-gray-500 sm:block">Anyagszükséglet szerint</span>
-                          <span className="text-lg sm:text-xl font-bold text-green-600">
-                            {(() => {
-                              let totalLeftoverValue = 0;
-                              if (result.surfaceResults) {
-                                result.surfaceResults.forEach((sr: any) => {
-                                  sr.items.forEach((srItem: any) => {
-                                    if (srItem.pkgs && srItem.pkgs.length > 0 && srItem.leftover > 0) {
-                                      const pkg = srItem.pkgs[0];
-                                      const pkgSize = pkg.liters || pkg.kg || pkg.m2 || 1;
-                                      const unitPrice = pkg.price / pkgSize;
-                                      totalLeftoverValue += srItem.leftover * unitPrice;
-                                    }
+                      {isPartner ? (
+                        <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
+                          <div className="flex justify-between sm:block sm:text-right">
+                            <span className="text-xs text-gray-500 sm:block">Listaár</span>
+                            <span className="text-lg sm:text-xl font-bold text-gray-400 line-through">
+                              {(() => {
+                                let partnerTotal = 0;
+                                result.items.forEach((item, idx) => {
+                                  item.pkgs.forEach((pkg, i) => {
+                                    const key = `${idx}_${i}`;
+                                    const effectiveQty = partnerQtyOverrides[key] !== undefined ? partnerQtyOverrides[key] : (pkg.qty || 0);
+                                    partnerTotal += pkg.price * effectiveQty;
                                   });
                                 });
-                              }
-                              return Math.round(result.total - totalLeftoverValue).toLocaleString('hu-HU');
-                            })()} Ft
-                          </span>
+                                return partnerTotal.toLocaleString('hu-HU');
+                              })()} Ft
+                            </span>
+                          </div>
+                          <div className="flex justify-between sm:block sm:text-right">
+                            <span className="text-xs text-green-600 sm:block font-semibold">Partneri ár ({discountPercent}%)</span>
+                            <span className="text-lg sm:text-xl font-bold text-green-600">
+                              {(() => {
+                                let partnerTotal = 0;
+                                result.items.forEach((item, idx) => {
+                                  item.pkgs.forEach((pkg, i) => {
+                                    const key = `${idx}_${i}`;
+                                    const effectiveQty = partnerQtyOverrides[key] !== undefined ? partnerQtyOverrides[key] : (pkg.qty || 0);
+                                    partnerTotal += pkg.price * effectiveQty;
+                                  });
+                                });
+                                return Math.round(partnerTotal * discountMultiplier).toLocaleString('hu-HU');
+                              })()} Ft
+                            </span>
+                          </div>
                         </div>
-                      </div>
+                      ) : (
+                        <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
+                          <div className="flex justify-between sm:block sm:text-right">
+                            <span className="text-xs text-gray-500 sm:block">Kiszerelés szerint</span>
+                            <span className="text-lg sm:text-xl font-bold text-brand-600">
+                              {result.total.toLocaleString('hu-HU')} Ft
+                            </span>
+                          </div>
+                          <div className="flex justify-between sm:block sm:text-right">
+                            <span className="text-xs text-gray-500 sm:block">Anyagszükséglet szerint</span>
+                            <span className="text-lg sm:text-xl font-bold text-green-600">
+                              {(() => {
+                                let totalLeftoverValue = 0;
+                                if (result.surfaceResults) {
+                                  const totalNeededMap: Record<string, number> = {};
+                                  result.surfaceResults.forEach((sr: any) => {
+                                    sr.items.forEach((srItem: any) => {
+                                      const name = srItem.cat.replace(' (1 réteg)', '').replace(' (2 réteg)', '');
+                                      if (!totalNeededMap[name]) totalNeededMap[name] = 0;
+                                      totalNeededMap[name] += srItem.needed;
+                                    });
+                                  });
+                                  
+                                  result.items.forEach((aggItem: any) => {
+                                    const catClean = aggItem.cat.replace(' (1 réteg)', '').replace(' (2 réteg)', '').replace(' (összesített)', '');
+                                    
+                                    let neededAmount = 0;
+                                    Object.entries(totalNeededMap).forEach(([name, amount]) => {
+                                      if (catClean.includes(name) || name.includes(catClean)) {
+                                        neededAmount = amount as number;
+                                      }
+                                    });
+                                    
+                                    let gotAmount = 0;
+                                    if (aggItem.pkgs && aggItem.pkgs.length > 0) {
+                                      aggItem.pkgs.forEach((pkg: any) => {
+                                        const pkgSize = pkg.liters || pkg.kg || pkg.m2 || 0;
+                                        gotAmount += pkgSize * (pkg.qty || 0);
+                                      });
+                                    }
+                                    
+                                    const leftover = gotAmount - neededAmount;
+                                    if (leftover > 0.01 && aggItem.pkgs.length > 0) {
+                                      const pkg = aggItem.pkgs[0];
+                                      const pkgSize = pkg.liters || pkg.kg || pkg.m2 || 1;
+                                      const unitPrice = pkg.price / pkgSize;
+                                      totalLeftoverValue += leftover * unitPrice;
+                                    }
+                                  });
+                                }
+                                return Math.round(result.total - totalLeftoverValue).toLocaleString('hu-HU');
+                              })()} Ft
+                            </span>
+                          </div>
+                        </div>
+                      )}
                     </div>
                     <p className="text-xs text-gray-500 mt-2">
-                      Az árak tartalmazzák az ÁFÁ-t. Munkadíj nem szerepel a kalkulációban. Az anyagszükséglet szerinti ár a maradék anyag értékének levonásával számolt.
+                      {isPartner 
+                        ? 'Az árak tartalmazzák az ÁFÁ-t. Munkadíj nem szerepel a kalkulációban. A mennyiségek szerkeszthetők — ha van raktáron anyagod, csökkentsd a darabszámot.'
+                        : 'Az árak tartalmazzák az ÁFÁ-t. Munkadíj nem szerepel a kalkulációban. Az anyagszükséglet szerinti ár a maradék anyag értékének levonásával számolt.'
+                      }
                     </p>
                   </div>
                 </div>
 
-                {/* Maradék anyagok szekció - csak összesített */}
+                {/* Maradék anyagok szekció */}
                 {result.surfaceResults && result.surfaceResults.some((sr: any) => sr.items.some((item: any) => item.leftover > 0.01)) && (
                   <div className="bg-gradient-to-r from-brand-50 to-brand-50 p-5 rounded-xl border-2 border-brand-200">
                     <h3 className="font-bold text-lg mb-3 text-brand-900">
@@ -1862,7 +2144,6 @@ export default function Calculator() {
                       {(() => {
                         const totalLeftovers: Record<string, { amount: number; unit: string; order: number }> = {};
                         
-                        // Kategória sorrend meghatározása
                         const categoryOrder = [
                           'Primacem ABS', 'Primacem Plusz', 'Primacem Grip', 'Primapox 100 Barrier',
                           'Háló',
@@ -1874,10 +2155,9 @@ export default function Calculator() {
                           'ONE Coat (matt)', 'ONE Coat (selyemfény)', 'ONE Coat (fényes)',
                           'Dragon (matt)', 'Dragon (selyemfény)', 'Dragon (fényes)',
                           'TOP 100 (matt)', 'TOP 100 (fényes)',
-                          'TOP PRO (lassú kötésű)', 'TOP PRO (gyors kötésű)'
+                          'TOP PRO+ (lassú kötésű)', 'TOP PRO+ (gyors kötésű)'
                         ];
                         
-                        // Összesített szükséglet kiszámítása (összes felület együtt)
                         const totalNeeded: Record<string, { amount: number; unit: string }> = {};
                         result.surfaceResults!.forEach((sr: any) => {
                           sr.items.forEach((item: any) => {
@@ -1889,11 +2169,9 @@ export default function Calculator() {
                           });
                         });
                         
-                        // Az összesített csomagokból számoljuk a maradékot
                         result.items.forEach((item: any) => {
                           const catClean = item.cat.replace(' (1 réteg)', '').replace(' (2 réteg)', '').replace(' (összesített)', '');
                           
-                          // Megkeressük a megfelelő szükségletet
                           let neededAmount = 0;
                           let unit = '';
                           Object.entries(totalNeeded).forEach(([name, data]) => {
@@ -1903,7 +2181,6 @@ export default function Calculator() {
                             }
                           });
                           
-                          // Kapott mennyiség a csomagokból
                           let gotAmount = 0;
                           if (item.pkgs && item.pkgs.length > 0) {
                             item.pkgs.forEach((pkg: any) => {
@@ -1924,7 +2201,6 @@ export default function Calculator() {
                           }
                         });
                         
-                        // Rendezés kategória sorrend szerint
                         const sortedEntries = Object.entries(totalLeftovers)
                           .sort((a, b) => a[1].order - b[1].order);
                         
@@ -1941,6 +2217,74 @@ export default function Calculator() {
                     </div>
                   </div>
                 )}
+
+                {/* Kosárba teszem gomb */}
+                <div className="bg-white p-5 rounded-xl border-2 border-brand-200">
+                  <button
+                    onClick={handleAddToCart}
+                    disabled={cartLoading}
+                    className="w-full bg-gradient-to-r from-brand-500 to-brand-500 hover:from-brand-600 hover:to-brand-600 disabled:from-gray-400 disabled:to-gray-500 text-white text-lg font-bold py-4 rounded-xl shadow-lg transition-all transform hover:scale-[1.02] active:scale-[0.98] disabled:scale-100 disabled:cursor-not-allowed"
+                  >
+                    {cartLoading ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+                        </svg>
+                        Kosár feltöltése...
+                      </span>
+                    ) : (
+                      'Kosárba teszem'
+                    )}
+                  </button>
+                  
+                  {isPartner && (
+                    <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                      <p className="text-sm font-medium text-yellow-800">
+                        Fontos: A partneri kedvezmény igénybevételéhez a webshopban is be kell jelentkezned a fiókodba.
+                      </p>
+                    </div>
+                  )}
+                  
+                  {cartError && (
+                    <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                      <p className="text-sm text-red-700">{cartError}</p>
+                    </div>
+                  )}
+                  
+                  {/* Figyelmeztetés ha vannak hiányzó SKU-k */}
+                  {(() => {
+                    const missing: string[] = [];
+                    result.items.forEach((item, idx) => {
+                      item.pkgs.forEach((pkg, i) => {
+                        const key = `${idx}_${i}`;
+                        const effectiveQty = isPartner && partnerQtyOverrides[key] !== undefined 
+                          ? partnerQtyOverrides[key] 
+                          : (pkg.qty || 0);
+                        if (effectiveQty <= 0) return;
+                        const skuKey = getSkuKey(pkg.name || '');
+                        if (!SHOPRENTER_SKUS[skuKey]) {
+                          missing.push(pkg.name || '');
+                        }
+                      });
+                    });
+                    
+                    if (missing.length === 0) return null;
+                    
+                    return (
+                      <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                        <p className="text-sm font-medium text-yellow-800 mb-1">
+                          Az alábbi termékek még nem elérhetők a webshopban:
+                        </p>
+                        <ul className="text-xs text-yellow-700 space-y-0.5">
+                          {missing.map((name, i) => (
+                            <li key={i}>• {name}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    );
+                  })()}
+                </div>
               </div>
             )}
           </div>

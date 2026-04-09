@@ -32,6 +32,7 @@ export interface ProductOption {
 export interface AlapozoProduct {
   name: string;
   info?: string;
+  tooltip?: string;
   options: ProductOption[];
 }
 export interface MikrocementProduct {
@@ -39,11 +40,13 @@ export interface MikrocementProduct {
   kgPerM2: number;
   literPerKg?: number;
   info?: string;
+  tooltip?: string;
   options?: ProductOption[];
 }
 export interface LakkProduct {
   name: string;
   info?: string;
+  tooltip?: string;
   needPresealer?: boolean;
   options: ProductOption[];
 }
@@ -83,6 +86,7 @@ export interface CalculationResult {
 }
 export interface SystemProducts {
   name?: string;
+  tooltip?: string;
   alapozok: Record<string, AlapozoProduct>;
   halo?: ProductOption[];
   mikrocementek?: Record<string, MikrocementProduct>;
