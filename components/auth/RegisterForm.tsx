@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/shared/supabase';
-import { postalCodeMap } from '@/lib/postalCodes';
+import { postalCodeMap } from '@/lib/shared/postalCodes';
 
 interface RegisterFormProps {
   onSwitch: () => void;

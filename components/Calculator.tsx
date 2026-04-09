@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { PRODUCTS } from '@/lib/products';
-import { optimizeByM2, optimizeByKg, optimizeByLiters } from '@/lib/utils';
+import { optimizeByM2, optimizeByKg, optimizeByLiters } from '@/lib/shared/utils';
 import { SHOPRENTER_SKUS, COMPANION_PRODUCTS } from '@/lib/shoprenterskus';
 import { MikrocementSystem, Surface, CalculationResult, SurfaceCalculation, SystemProducts } from '@/types';
 
