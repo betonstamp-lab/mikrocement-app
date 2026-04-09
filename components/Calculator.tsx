@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { PRODUCTS } from '@/lib/products';
+import { PRODUCTS } from '@/lib/calculators/mikrocement/products';
 import { optimizeByM2, optimizeByKg, optimizeByLiters } from '@/lib/shared/utils';
 import { SHOPRENTER_SKUS, COMPANION_PRODUCTS } from '@/lib/shared/shoprenterskus';
 import { MikrocementSystem, Surface, CalculationResult, SurfaceCalculation, SystemProducts } from '@/types';
