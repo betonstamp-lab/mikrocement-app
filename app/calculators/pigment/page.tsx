@@ -4,9 +4,11 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase, UserProfile } from '@/lib/shared/supabase';
 import Image from 'next/image';
-import { NATTURE_PIGMENT_RECIPES, NATTURE_COLORS } from '@/lib/calculators/mikrocement/pigments';
+import { NATTURE_PIGMENT_RECIPES, NATTURE_COLORS, ATLANTTIC_PIGMENT_RECIPES } from '@/lib/calculators/mikrocement/pigments';
 
-const PRODUCT_OPTIONS = [
+type SystemType = 'natture' | 'pool' | null;
+
+const NATTURE_PRODUCTS = [
   { value: 's_WT', label: 'Natture S WT' },
   { value: 'm_WT', label: 'Natture M WT' },
   { value: 'l_WT', label: 'Natture L WT' },
@@ -17,6 +19,12 @@ const PRODUCT_OPTIONS = [
   { value: 'xl_TOP100', label: 'Natture XL TOP100' },
 ];
 
+const POOL_PRODUCTS = [
+  { value: 'xl', label: 'Aquaciment XL' },
+];
+
+const POOL_COLORS = ['BLANCO'];
+
 interface PigmentResult {
   product: string;
   color: string;
@@ -25,12 +33,20 @@ interface PigmentResult {
   totalGrams: number;
 }
 
+const SYSTEMS = [
+  { key: 'natture' as const, label: 'Natture', logo: '/images/natture.png', active: true },
+  { key: 'pool' as const, label: 'Pool', logo: '/images/Atlanttic_Topciment_Logo_200px.png', active: true },
+  { key: 'efecttoQuartz' as const, label: 'Efectto Quartz', logo: '/images/efectto_quartz.png', active: false },
+  { key: 'efecttoPU' as const, label: 'Efectto PU', logo: '/images/Efectto_PU_logo_web.png', active: false },
+];
+
 export default function PigmentCalculatorPage() {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const router = useRouter();
 
+  const [selectedSystem, setSelectedSystem] = useState<SystemType>(null);
   const [product, setProduct] = useState('');
   const [color, setColor] = useState('');
   const [kg, setKg] = useState('');
@@ -65,11 +81,28 @@ export default function PigmentCalculatorPage() {
     router.push('/');
   };
 
-  const handleCalculate = () => {
-    if (!product || !color || !kg) return;
+  const handleSystemSelect = (system: SystemType) => {
+    setSelectedSystem(system);
+    setProduct('');
+    setColor('');
+    setKg('');
+    setResult(null);
+  };
 
-    const [grainSize, sealerType] = product.split('_');
-    const recipe = NATTURE_PIGMENT_RECIPES[sealerType]?.[grainSize]?.[color];
+  const productOptions = selectedSystem === 'natture' ? NATTURE_PRODUCTS : POOL_PRODUCTS;
+  const colorOptions = selectedSystem === 'natture' ? NATTURE_COLORS : POOL_COLORS;
+
+  const handleCalculate = () => {
+    if (!product || !color || !kg || !selectedSystem) return;
+
+    let recipe: { basePigment: string; gramsPerKg: number }[] | undefined;
+
+    if (selectedSystem === 'natture') {
+      const [grainSize, sealerType] = product.split('_');
+      recipe = NATTURE_PIGMENT_RECIPES[sealerType]?.[grainSize]?.[color];
+    } else if (selectedSystem === 'pool') {
+      recipe = ATLANTTIC_PIGMENT_RECIPES[product]?.[color];
+    }
 
     if (!recipe) {
       setResult(null);
@@ -84,7 +117,7 @@ export default function PigmentCalculatorPage() {
 
     const totalGrams = parseFloat(pigments.reduce((s, p) => s + p.grams, 0).toFixed(2));
 
-    const productLabel = PRODUCT_OPTIONS.find(o => o.value === product)?.label || product;
+    const productLabel = productOptions.find(o => o.value === product)?.label || product;
 
     setResult({
       product: productLabel,
@@ -159,70 +192,105 @@ export default function PigmentCalculatorPage() {
           Pigment Kalkulátor
         </h1>
         <p className="text-sm md:text-base text-gray-500 mb-8 text-center">
-          Számítsd ki mennyi pigment szükséges egy adott színhez
+          Válaszd ki a rendszert
         </p>
 
-        {/* Form */}
-        <div className="w-full max-w-md space-y-4">
-          {/* Product */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Mikrocement
-            </label>
-            <select
-              value={product}
-              onChange={(e) => { setProduct(e.target.value); setResult(null); }}
-              className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-brand-500 focus:outline-none transition text-gray-900 font-medium bg-white"
+        {/* System selector */}
+        <div className="w-full max-w-3xl grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          {SYSTEMS.map(sys => (
+            <button
+              key={sys.key}
+              disabled={!sys.active}
+              onClick={() => sys.active && handleSystemSelect(sys.key as SystemType)}
+              className={`relative bg-white rounded-xl shadow-md p-4 flex flex-col items-center text-center transition-all ${
+                sys.active
+                  ? selectedSystem === sys.key
+                    ? 'border-2 border-brand-500 ring-2 ring-gray-300 shadow-lg cursor-pointer'
+                    : 'border-2 border-gray-300 hover:border-brand-500 hover:scale-105 cursor-pointer'
+                  : 'opacity-60 grayscale border-2 border-gray-300 cursor-not-allowed'
+              }`}
             >
-              <option value="">Válassz terméket...</option>
-              {PRODUCT_OPTIONS.map(o => (
-                <option key={o.value} value={o.value}>{o.label}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* Color */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Szín
-            </label>
-            <select
-              value={color}
-              onChange={(e) => { setColor(e.target.value); setResult(null); }}
-              className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-brand-500 focus:outline-none transition text-gray-900 font-medium bg-white"
-            >
-              <option value="">Válassz színt...</option>
-              {NATTURE_COLORS.map(c => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* Kg */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Mennyiség (kg)
-            </label>
-            <input
-              type="number"
-              step="0.1"
-              min="0"
-              value={kg}
-              onChange={(e) => { setKg(e.target.value); setResult(null); }}
-              placeholder="Pl. 10"
-              className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-brand-500 focus:outline-none transition text-gray-900 font-medium bg-white"
-            />
-          </div>
-
-          {/* Calculate button */}
-          <button
-            onClick={handleCalculate}
-            disabled={!product || !color || !kg}
-            className="w-full bg-brand-500 hover:bg-brand-600 text-white font-semibold py-3 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Számítás
-          </button>
+              {!sys.active && (
+                <span className="absolute top-2 right-2 bg-brand-500 text-white text-[9px] font-bold px-2 py-0.5 rounded-full">
+                  Hamarosan
+                </span>
+              )}
+              <div className="h-24 md:h-32 flex items-center justify-center">
+                <Image
+                  src={sys.logo}
+                  alt={sys.label}
+                  width={200}
+                  height={120}
+                  className="max-h-full w-auto object-contain"
+                />
+              </div>
+            </button>
+          ))}
         </div>
+
+        {/* Form - only visible when system selected */}
+        {selectedSystem && (
+          <div className="w-full max-w-md space-y-4">
+            {/* Product */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Mikrocement
+              </label>
+              <select
+                value={product}
+                onChange={(e) => { setProduct(e.target.value); setResult(null); }}
+                className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-brand-500 focus:outline-none transition text-gray-900 font-medium bg-white"
+              >
+                <option value="">Válassz terméket...</option>
+                {productOptions.map(o => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Color */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Szín
+              </label>
+              <select
+                value={color}
+                onChange={(e) => { setColor(e.target.value); setResult(null); }}
+                className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-brand-500 focus:outline-none transition text-gray-900 font-medium bg-white"
+              >
+                <option value="">Válassz színt...</option>
+                {colorOptions.map(c => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Kg */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Mennyiség (kg)
+              </label>
+              <input
+                type="number"
+                step="0.1"
+                min="0"
+                value={kg}
+                onChange={(e) => { setKg(e.target.value); setResult(null); }}
+                placeholder="Pl. 10"
+                className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-brand-500 focus:outline-none transition text-gray-900 font-medium bg-white"
+              />
+            </div>
+
+            {/* Calculate button */}
+            <button
+              onClick={handleCalculate}
+              disabled={!product || !color || !kg}
+              className="w-full bg-brand-500 hover:bg-brand-600 text-white font-semibold py-3 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Számítás
+            </button>
+          </div>
+        )}
 
         {/* Result */}
         {result && (

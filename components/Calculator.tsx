@@ -2474,12 +2474,19 @@ export default function Calculator({ profile }: { profile?: { role?: string; par
                         const sortedEntries = Object.entries(totalLeftovers)
                           .sort((a, b) => a[1].order - b[1].order);
                         
+                        const formatLeftover = (name: string, amount: number, unit: string) => {
+                          if (name.includes('Arcocem Basic') && unit === 'L') {
+                            return `${(amount * 1000).toFixed(1)} mL`;
+                          }
+                          return `${amount.toFixed(2)} ${unit}`;
+                        };
+
                         return sortedEntries.map(([name, data], idx) => (
                           <div key={idx} className="flex items-center gap-2 text-gray-700">
                             <span className="w-2 h-2 bg-brand-600 rounded-full"></span>
                             <span>{name}:</span>
                             <span className="font-semibold text-brand-700">
-                              {data.amount.toFixed(2)} {data.unit}
+                              {formatLeftover(name, data.amount, data.unit)}
                             </span>
                           </div>
                         ));
