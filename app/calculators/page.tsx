@@ -102,7 +102,7 @@ export default function CalculatorsPage() {
         </p>
 
         {/* Cards grid */}
-        <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+        <div className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
           {/* Mikrocement - ACTIVE */}
           <Link
             href="/calculators/mikrocement"
@@ -119,7 +119,7 @@ export default function CalculatorsPage() {
             </div>
             <h2 className="text-lg font-bold text-gray-800 mb-2">Mikrocement Kalkulátor</h2>
             <p className="text-sm text-gray-500 mb-4 flex-1">
-              Topciment professzionális mikrocement rendszerek anyagszükséglet és ár kalkulátora.
+              Topciment mikrocement rendszerek anyagszükséglet és ár kalkulátora.
             </p>
             <span className="inline-flex items-center gap-1 bg-brand-500 hover:bg-brand-600 text-white font-semibold py-2 px-5 rounded-lg transition-colors text-sm">
               Kalkulátor megnyitása
@@ -128,6 +128,26 @@ export default function CalculatorsPage() {
               </svg>
             </span>
           </Link>
+
+          {/* Pigment - COMING SOON */}
+          <div className="relative bg-white rounded-2xl shadow-lg p-6 flex flex-col items-center text-center opacity-60 grayscale">
+            <span className="absolute top-3 right-3 bg-brand-500 text-white text-[10px] font-bold px-3 py-1 rounded-full">
+              Hamarosan
+            </span>
+            <div className="h-32 md:h-40 flex items-center justify-center mb-4">
+              <Image
+                src="/images/topciment-logo2.png"
+                alt="Topciment"
+                width={200}
+                height={160}
+                className="max-h-24 md:max-h-32 w-auto object-contain"
+              />
+            </div>
+            <h2 className="text-lg font-bold text-gray-800 mb-2">Pigment Kalkulátor</h2>
+            <p className="text-sm text-gray-500 mb-4 flex-1">
+              Topciment mikrocement rendszerek Pigment kalkulátora.
+            </p>
+          </div>
 
           {/* Vakolat - COMING SOON */}
           <div className="relative bg-white rounded-2xl shadow-lg p-6 flex flex-col items-center text-center opacity-60 grayscale">
