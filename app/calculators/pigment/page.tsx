@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase, UserProfile } from '@/lib/shared/supabase';
 import Image from 'next/image';
-import { NATTURE_PIGMENT_RECIPES, NATTURE_COLORS, ATLANTTIC_PIGMENT_RECIPES } from '@/lib/calculators/mikrocement/pigments';
+import { NATTURE_PIGMENT_RECIPES, NATTURE_COLORS, NATTURE_COLOR_HEX, ATLANTTIC_PIGMENT_RECIPES } from '@/lib/calculators/mikrocement/pigments';
 
 type SystemType = 'natture' | 'pool' | null;
 
@@ -24,6 +24,7 @@ const POOL_PRODUCTS = [
 ];
 
 const POOL_COLORS = ['BLANCO'];
+const POOL_COLOR_HEX: Record<string, string> = { 'BLANCO': '#efede8' };
 
 interface PigmentResult {
   product: string;
@@ -230,7 +231,7 @@ export default function PigmentCalculatorPage() {
 
         {/* Form - only visible when system selected */}
         {selectedSystem && (
-          <div className="w-full max-w-md space-y-4">
+          <div className="w-full max-w-2xl space-y-4">
             {/* Product */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -253,16 +254,40 @@ export default function PigmentCalculatorPage() {
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Szín
               </label>
-              <select
-                value={color}
-                onChange={(e) => { setColor(e.target.value); setResult(null); }}
-                className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-brand-500 focus:outline-none transition text-gray-900 font-medium bg-white"
-              >
-                <option value="">Válassz színt...</option>
-                {colorOptions.map(c => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
+              {color && (
+                <div className="mb-2 flex items-center gap-2">
+                  <div className="w-6 h-6 rounded border border-gray-300" style={{ backgroundColor: (selectedSystem === 'natture' ? NATTURE_COLOR_HEX[color] : POOL_COLOR_HEX[color]) || '#ccc' }} />
+                  <span className="text-sm font-medium text-gray-800">{color}</span>
+                  <button
+                    onClick={() => { setColor(''); setResult(null); }}
+                    className="text-xs text-red-500 hover:text-red-700 ml-2"
+                  >
+                    ✕ Törlés
+                  </button>
+                </div>
+              )}
+              <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
+                {colorOptions.map(c => {
+                  const hex = (selectedSystem === 'natture' ? NATTURE_COLOR_HEX[c] : POOL_COLOR_HEX[c]) || '#ccc';
+                  return (
+                    <button
+                      key={c}
+                      onClick={() => { setColor(c); setResult(null); }}
+                      className={`flex flex-col items-center p-1 rounded border-2 transition-all hover:scale-105 ${
+                        color === c
+                          ? 'border-brand-500 ring-2 ring-brand-300 shadow-md'
+                          : 'border-gray-200 hover:border-gray-400'
+                      }`}
+                    >
+                      <div
+                        className="w-full aspect-square rounded-sm mb-1"
+                        style={{ backgroundColor: hex }}
+                      />
+                      <span className="text-[9px] leading-tight text-center text-gray-600 break-words">{c}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Kg */}
@@ -294,7 +319,7 @@ export default function PigmentCalculatorPage() {
 
         {/* Result */}
         {result && (
-          <div className="w-full max-w-md mt-8 bg-white rounded-2xl shadow-lg p-6">
+          <div className="w-full max-w-2xl mt-8 bg-white rounded-2xl shadow-lg p-6">
             <h2 className="text-lg font-bold text-gray-800 mb-4">Pigment szükséglet</h2>
             <div className="space-y-2 text-sm text-gray-700">
               <p><span className="font-medium">Termék:</span> {result.product}</p>
