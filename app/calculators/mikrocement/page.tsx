@@ -92,12 +92,20 @@ export default function CalculatorPage() {
               </p>
             </div>
           </div>
-          <button
-            onClick={handleLogout}
-            className="text-sm text-gray-600 hover:text-gray-800 font-medium"
-          >
-            Kijelentkezés
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => router.push('/calculators')}
+              className="text-sm text-gray-700 font-medium border-2 border-gray-300 rounded-lg px-3 py-2 hover:text-gray-900 transition-colors"
+            >
+              ← Vissza a főoldalra
+            </button>
+            <button
+              onClick={handleLogout}
+              className="text-sm text-gray-500 font-medium border-2 border-red-500 rounded-lg px-3 py-2 hover:text-red-500 transition-colors"
+            >
+              Kijelentkezés
+            </button>
+          </div>
         </div>
       </div>
 
