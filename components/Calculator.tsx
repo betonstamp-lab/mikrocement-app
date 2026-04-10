@@ -5,7 +5,7 @@ import { PRODUCTS } from '@/lib/calculators/mikrocement/products';
 import { optimizeByM2, optimizeByKg, optimizeByLiters } from '@/lib/shared/utils';
 import { SHOPRENTER_SKUS, COMPANION_PRODUCTS } from '@/lib/shared/shoprenterskus';
 import { MikrocementSystem, Surface, CalculationResult, SurfaceCalculation, SystemProducts } from '@/types';
-import { NATTURE_COLORS, NATTURE_COLOR_HEX, SEALER_TO_PIGMENT_TYPE } from '@/lib/calculators/mikrocement/pigments';
+import { NATTURE_COLORS, NATTURE_COLOR_HEX, SEALER_TO_PIGMENT_TYPE, NATTURE_PIGMENT_RECIPES, PIGMENT_DENSITIES, PIGMENT_PRODUCTS } from '@/lib/calculators/mikrocement/pigments';
 
 const Tooltip = ({ text }: { text: string }) => {
   const [open, setOpen] = useState(false);
@@ -450,8 +450,44 @@ export default function Calculator({ profile }: { profile?: { role?: string; par
         category: lakkData.name,
         items: [{ name: lakkData.name, amount: lakkM2, unit: 'm2' }]
       });
+
+      // Pigment számítás
+      if (surface.selectedColor && lakk) {
+        const sealerType = SEALER_TO_PIGMENT_TYPE[lakk];
+        if (sealerType) {
+          const pigmentTotals: Record<string, number> = {};
+
+          (['xl', 'l', 'm', 's'] as const).forEach(mikroType => {
+            if (surface.layers[mikroType] > 0) {
+              const layerCount = surface.layers[mikroType];
+              const mikroData = sys.mikrocementek![mikroType];
+              const mikroKg = totalM2 * layerCount * mikroData.kgPerM2;
+
+              const recipe = NATTURE_PIGMENT_RECIPES[sealerType]?.[mikroType]?.[surface.selectedColor!];
+              if (recipe) {
+                recipe.forEach(r => {
+                  if (!pigmentTotals[r.basePigment]) pigmentTotals[r.basePigment] = 0;
+                  pigmentTotals[r.basePigment] += r.gramsPerTenKg * (mikroKg / 10);
+                });
+              }
+            }
+          });
+
+          Object.entries(pigmentTotals).forEach(([basePigment, totalGrams]) => {
+            const density = PIGMENT_DENSITIES[basePigment];
+            const product = PIGMENT_PRODUCTS[basePigment];
+            if (density && product) {
+              const totalMl = totalGrams / density;
+              result.materials.push({
+                category: `Pigment - ${product.name}`,
+                items: [{ name: product.name, amount: totalMl / 1000, unit: 'L' }]
+              });
+            }
+          });
+        }
+      }
     }
-    
+
     // EFFECTO QUARTZ RENDSZER
     if (system === 'effectoQuartz') {
       const totalM2 = result.area;
@@ -818,8 +854,28 @@ export default function Calculator({ profile }: { profile?: { role?: string; par
           });
         }
       });
+
+      // NATTURE - Pigmentek
+      Object.keys(aggregated).forEach(key => {
+        if (key.startsWith('Arcocem Basic')) {
+          const [name, unit] = key.split('_');
+          const totalLiters = aggregated[key].amount;
+
+          const productKey = Object.keys(PIGMENT_PRODUCTS).find(k => PIGMENT_PRODUCTS[k].name === name);
+          if (productKey) {
+            const product = PIGMENT_PRODUCTS[productKey];
+            const pkgs = optimizeByLiters(totalLiters, product.options);
+
+            res.items.push({
+              cat: `${product.name} (összesített)`,
+              pkgs: pkgs.map(p => ({ ...p, name: `${product.name} ${p.liters}L`, qty: p.qty || 0 })),
+              price: pkgs.reduce((s, p) => s + p.price * (p.qty || 0), 0)
+            });
+          }
+        }
+      });
     }
-    
+
     // EFFECTO QUARTZ - Alapozó
     if (system === 'effectoQuartz') {
       Object.keys(aggregated).forEach(key => {
@@ -1189,6 +1245,32 @@ export default function Calculator({ profile }: { profile?: { role?: string; par
             unit: 'L'
           });
           total += price;
+        }
+      });
+
+      // Pigmentek
+      Object.keys(materialsByCategory).forEach(cat => {
+        if (cat.startsWith('Pigment - ')) {
+          const mat = materialsByCategory[cat];
+          const productKey = Object.keys(PIGMENT_PRODUCTS).find(k => PIGMENT_PRODUCTS[k].name === mat.name);
+          if (productKey) {
+            const product = PIGMENT_PRODUCTS[productKey];
+            const neededLiters = mat.amount;
+            const pkgs = optimizeByLiters(neededLiters, product.options);
+            const gotLiters = pkgs.reduce((sum, p) => sum + (p.liters || 0) * (p.qty || 0), 0);
+            const price = pkgs.reduce((s, p) => s + p.price * (p.qty || 0), 0);
+
+            items.push({
+              cat: cat.replace('Pigment - ', ''),
+              pkgs: pkgs.map(p => ({ ...p, name: `${product.name} ${p.liters}L`, qty: p.qty || 0 })),
+              price,
+              needed: neededLiters,
+              got: gotLiters,
+              leftover: gotLiters - neededLiters,
+              unit: 'L'
+            });
+            total += price;
+          }
         }
       });
     }
