@@ -79,7 +79,7 @@ export default function PigmentCalculatorPage() {
     const kgNum = parseFloat(kg);
     const pigments = recipe.map(p => ({
       name: p.basePigment,
-      grams: parseFloat((p.gramsPerTenKg * kgNum / 10).toFixed(2))
+      grams: parseFloat((p.gramsPerKg * kgNum).toFixed(2))
     }));
 
     const totalGrams = parseFloat(pigments.reduce((s, p) => s + p.grams, 0).toFixed(2));

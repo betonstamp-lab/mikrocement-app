@@ -354,9 +354,9 @@ export default function Calculator({ profile }: { profile?: { role?: string; par
         items: [{ name: 'Aquaciment XL 18kg', amount: xlKg, unit: 'kg' }]
       });
       
-      // Aquaciment XL BLANCO pigment: 10.72 g/10kg (csak "White" szín esetén)
+      // Aquaciment XL BLANCO pigment: 10.72 g/kg (csak "White" szín esetén)
       if (surface.selectedColor === 'BLANCO') {
-        const blancoGrams = 10.72 * (xlKg / 10);
+        const blancoGrams = 10.72 * xlKg;
         const blancoMl = blancoGrams / PIGMENT_DENSITIES['BLANCO'];
         result.materials.push({
           category: 'Pigment - Arcocem Basic Blanco',
@@ -477,7 +477,7 @@ export default function Calculator({ profile }: { profile?: { role?: string; par
               if (recipe) {
                 recipe.forEach(r => {
                   if (!pigmentTotals[r.basePigment]) pigmentTotals[r.basePigment] = 0;
-                  pigmentTotals[r.basePigment] += r.gramsPerTenKg * (mikroKg / 10);
+                  pigmentTotals[r.basePigment] += r.gramsPerKg * mikroKg;
                 });
               }
             }
