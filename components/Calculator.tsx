@@ -354,6 +354,14 @@ export default function Calculator({ profile }: { profile?: { role?: string; par
         items: [{ name: 'Aquaciment XL 18kg', amount: xlKg, unit: 'kg' }]
       });
       
+      // Aquaciment XL BLANCO pigment: 10.72 g/10kg
+      const blancoGrams = 10.72 * (xlKg / 10);
+      const blancoMl = blancoGrams / PIGMENT_DENSITIES['BLANCO'];
+      result.materials.push({
+        category: 'Pigment - Arcocem Basic Blanco',
+        items: [{ name: 'Arcocem Basic Blanco', amount: blancoMl / 1000, unit: 'L' }]
+      });
+
       const xxlLiters = xxlKg * 0.3086;
       const xlLiters = xlKg * 0.408;
       result.materials.push({
@@ -745,7 +753,29 @@ export default function Calculator({ profile }: { profile?: { role?: string; par
         price: pieces * 76650
       });
     }
-    
+
+    // Pool - Pigmentek
+    if (system === 'pool') {
+      Object.keys(aggregated).forEach(key => {
+        if (key.startsWith('Arcocem Basic')) {
+          const name = key.substring(0, key.lastIndexOf('_'));
+          const totalLiters = aggregated[key].amount;
+
+          const productKey = Object.keys(PIGMENT_PRODUCTS).find(k => PIGMENT_PRODUCTS[k].name === name);
+          if (productKey) {
+            const product = PIGMENT_PRODUCTS[productKey];
+            const pkgs = optimizeByLiters(totalLiters, product.options);
+
+            res.items.push({
+              cat: `${product.name} (összesített)`,
+              pkgs: pkgs.map(p => ({ ...p, name: `${product.name} ${p.liters}L`, qty: p.qty || 0 })),
+              price: pkgs.reduce((s, p) => s + p.price * (p.qty || 0), 0)
+            });
+          }
+        }
+      });
+    }
+
     // NATTURE - Alapozó
     if (system === 'natture') {
       Object.keys(aggregated).forEach(key => {
@@ -1599,6 +1629,32 @@ export default function Calculator({ profile }: { profile?: { role?: string; par
         });
         total += price;
       }
+
+      // Pigmentek
+      Object.keys(materialsByCategory).forEach(cat => {
+        if (cat.startsWith('Pigment - ')) {
+          const mat = materialsByCategory[cat];
+          const productKey = Object.keys(PIGMENT_PRODUCTS).find(k => PIGMENT_PRODUCTS[k].name === mat.name);
+          if (productKey) {
+            const product = PIGMENT_PRODUCTS[productKey];
+            const neededLiters = mat.amount;
+            const pkgs = optimizeByLiters(neededLiters, product.options);
+            const gotLiters = pkgs.reduce((sum, p) => sum + (p.liters || 0) * (p.qty || 0), 0);
+            const price = pkgs.reduce((s, p) => s + p.price * (p.qty || 0), 0);
+
+            items.push({
+              cat: cat.replace('Pigment - ', ''),
+              pkgs: pkgs.map(p => ({ ...p, name: `${product.name} ${p.liters}L`, qty: p.qty || 0 })),
+              price,
+              needed: neededLiters,
+              got: gotLiters,
+              leftover: gotLiters - neededLiters,
+              unit: 'L'
+            });
+            total += price;
+          }
+        }
+      });
     }
 
     return { items, total };
