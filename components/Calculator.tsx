@@ -354,13 +354,15 @@ export default function Calculator({ profile }: { profile?: { role?: string; par
         items: [{ name: 'Aquaciment XL 18kg', amount: xlKg, unit: 'kg' }]
       });
       
-      // Aquaciment XL BLANCO pigment: 10.72 g/10kg
-      const blancoGrams = 10.72 * (xlKg / 10);
-      const blancoMl = blancoGrams / PIGMENT_DENSITIES['BLANCO'];
-      result.materials.push({
-        category: 'Pigment - Arcocem Basic Blanco',
-        items: [{ name: 'Arcocem Basic Blanco', amount: blancoMl / 1000, unit: 'L' }]
-      });
+      // Aquaciment XL BLANCO pigment: 10.72 g/10kg (csak "White" szín esetén)
+      if (surface.selectedColor === 'BLANCO') {
+        const blancoGrams = 10.72 * (xlKg / 10);
+        const blancoMl = blancoGrams / PIGMENT_DENSITIES['BLANCO'];
+        result.materials.push({
+          category: 'Pigment - Arcocem Basic Blanco',
+          items: [{ name: 'Arcocem Basic Blanco', amount: blancoMl / 1000, unit: 'L' }]
+        });
+      }
 
       const xxlLiters = xxlKg * 0.3086;
       const xlLiters = xlKg * 0.408;
@@ -2041,11 +2043,43 @@ export default function Calculator({ profile }: { profile?: { role?: string; par
                             </div>
                           </div>
                         )}
+
+                        {system === 'pool' && (
+                          <div className="mt-3">
+                            <label className="block text-xs font-medium text-gray-600 mb-2">
+                              Medence szín (opcionális):
+                            </label>
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => updateSurface(surface.id, 'selectedColor', surface.selectedColor === 'BLANCO' ? null : 'BLANCO')}
+                                className={`flex-1 flex items-center gap-2 p-2 rounded border-2 transition-all ${
+                                  surface.selectedColor === 'BLANCO'
+                                    ? 'border-brand-500 ring-2 ring-brand-300 shadow-md'
+                                    : 'border-gray-200 hover:border-gray-400'
+                                }`}
+                              >
+                                <div className="w-6 h-6 rounded border border-gray-300 shrink-0" style={{ backgroundColor: '#efede8' }} />
+                                <span className="text-sm font-medium text-gray-800">White</span>
+                              </button>
+                              <button
+                                onClick={() => updateSurface(surface.id, 'selectedColor', null)}
+                                className={`flex-1 flex items-center gap-2 p-2 rounded border-2 transition-all ${
+                                  !surface.selectedColor
+                                    ? 'border-brand-500 ring-2 ring-brand-300 shadow-md'
+                                    : 'border-gray-200 hover:border-gray-400'
+                                }`}
+                              >
+                                <div className="w-6 h-6 rounded border border-gray-300 shrink-0" style={{ backgroundColor: '#f5f0e0' }} />
+                                <span className="text-sm font-medium text-gray-800">Natural White</span>
+                              </button>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
                 ))}
-                
+
                 <button
                   onClick={addSurface}
                   className="w-full flex items-center justify-center gap-2 p-3 border-2 border-dashed border-brand-400 text-brand-600 hover:bg-brand-50 rounded-xl transition font-semibold"
