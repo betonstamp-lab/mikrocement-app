@@ -500,3 +500,10 @@ export const NATTURE_PIGMENT_RECIPES: Record<string, GrainRecipes> = {
     },
   },
 };
+
+// Atlanttic (Pool) pigment recipes - only XL gets BLANCO pigment
+export const ATLANTTIC_PIGMENT_RECIPES: Record<string, ColorRecipes> = {
+  "xl": {
+    "BLANCO": [{ basePigment: "BLANCO", gramsPerKg: 1.072 }]
+  }
+};
