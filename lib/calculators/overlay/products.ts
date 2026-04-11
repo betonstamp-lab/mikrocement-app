@@ -65,8 +65,7 @@ export const OVERLAY_SUPPORTING_PRODUCTS = {
   lakk_normal: {
     name: 'Sealcem DSV M70 18L',
     sku: 'TT11001',
-    // Nettó ár (bruttó Shoprenter: 106 010 Ft)
-    price: 83472,
+    price: 85654,
     liters: 18,
     m2PerUnit: 50,
   },

@@ -4,11 +4,33 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase, UserProfile } from '@/lib/shared/supabase';
 import Image from 'next/image';
-import { OVERLAY_COLORS } from '@/lib/calculators/overlay/products';
+import {
+  OVERLAY_COLORS,
+  OVERLAY_PRICE_PER_BAG,
+  OVERLAY_KG_PER_BAG,
+  OVERLAY_M2_PER_BAG,
+  OVERLAY_SUPPORTING_PRODUCTS,
+} from '@/lib/calculators/overlay/products';
 
 type Technology = 'por' | 'folyekony' | null;
 type PowderColor = 'noir' | 'antracita' | null;
 type Lacquer = 'normal' | 'ad' | null;
+
+interface OverlayResultLine {
+  name: string;
+  packaging: string;
+  qty: number;
+  subtotal: number;
+}
+
+interface OverlayResult {
+  lines: OverlayResultLine[];
+  net: number;
+  gross: number;
+  partnerPrice?: number;
+}
+
+const formatFt = (n: number) => `${n.toLocaleString('hu-HU')} Ft`;
 
 export default function OverlayCalculatorPage() {
   const [loading, setLoading] = useState(true);
@@ -21,6 +43,7 @@ export default function OverlayCalculatorPage() {
   const [overlayColor, setOverlayColor] = useState<string>('');
   const [lacquer, setLacquer] = useState<Lacquer>(null);
   const [area, setArea] = useState('');
+  const [result, setResult] = useState<OverlayResult | null>(null);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -56,16 +79,102 @@ export default function OverlayCalculatorPage() {
     if (tech !== 'por') {
       setPowderColor(null);
     }
+    setResult(null);
   };
 
+  const areaNum = parseFloat(area);
+  const isFormValid =
+    technology !== null &&
+    (technology !== 'por' || powderColor !== null) &&
+    overlayColor !== '' &&
+    lacquer !== null &&
+    !isNaN(areaNum) &&
+    areaNum > 0;
+
   const handleCalculate = () => {
-    console.log('Overlay kalkuláció input:', {
-      technology,
-      powderColor,
-      overlayColor,
-      lacquer,
-      area,
+    if (!isFormValid || technology === null || lacquer === null) return;
+
+    const lines: OverlayResultLine[] = [];
+
+    // 1) Primacem Plus
+    const primacem = OVERLAY_SUPPORTING_PRODUCTS.primacem_plus;
+    const primacemQty = Math.ceil(areaNum / primacem.m2PerUnit);
+    lines.push({
+      name: 'Primacem Plus',
+      packaging: '5L',
+      qty: primacemQty,
+      subtotal: primacemQty * primacem.price,
     });
+
+    // 2) Overlay (kiválasztott színnel)
+    const selectedColor = OVERLAY_COLORS.find(c => c.key === overlayColor);
+    const overlayQty = Math.ceil(areaNum / OVERLAY_M2_PER_BAG);
+    lines.push({
+      name: `Overlay ${selectedColor?.name ?? overlayColor}`,
+      packaging: `${OVERLAY_KG_PER_BAG} kg`,
+      qty: overlayQty,
+      subtotal: overlayQty * OVERLAY_PRICE_PER_BAG,
+    });
+
+    // 3) Leválasztó
+    if (technology === 'por') {
+      const powder =
+        powderColor === 'noir'
+          ? OVERLAY_SUPPORTING_PRODUCTS.leszvalaszto_por_noir
+          : OVERLAY_SUPPORTING_PRODUCTS.leszvalaszto_por_antracita;
+      const powderQty = Math.ceil(areaNum / powder.m2PerUnit);
+      lines.push({
+        name:
+          powderColor === 'noir'
+            ? 'Desmocem Powder Noir'
+            : 'Desmocem Powder Antracita',
+        packaging: '10 kg',
+        qty: powderQty,
+        subtotal: powderQty * powder.price,
+      });
+    } else {
+      const liquid = OVERLAY_SUPPORTING_PRODUCTS.leszvalaszto_folyekony;
+      const liquidQty = Math.ceil(areaNum / liquid.m2PerUnit);
+      lines.push({
+        name: 'Desmocem Liquid',
+        packaging: '5L',
+        qty: liquidQty,
+        subtotal: liquidQty * liquid.price,
+      });
+
+      // 4) Relief — csak folyékony technológiánál
+      const relief = OVERLAY_SUPPORTING_PRODUCTS.relief;
+      const reliefQty = Math.ceil(areaNum / relief.m2PerUnit);
+      lines.push({
+        name: 'Masters Relief Enhancer',
+        packaging: '150 gr',
+        qty: reliefQty,
+        subtotal: reliefQty * relief.price,
+      });
+    }
+
+    // 5) Lakk
+    const lakk =
+      lacquer === 'normal'
+        ? OVERLAY_SUPPORTING_PRODUCTS.lakk_normal
+        : OVERLAY_SUPPORTING_PRODUCTS.lakk_ad;
+    const lakkQty = Math.ceil(areaNum / lakk.m2PerUnit);
+    lines.push({
+      name:
+        lacquer === 'normal'
+          ? 'Sealcem DSV M70 (normál)'
+          : 'Sealcem DSV M70 AD (csúszásgátló)',
+      packaging: '18L',
+      qty: lakkQty,
+      subtotal: lakkQty * lakk.price,
+    });
+
+    const net = lines.reduce((s, l) => s + l.subtotal, 0);
+    const gross = Math.round(net * 1.27);
+    const partnerPrice =
+      profile?.role === 'partner' ? Math.round(gross * 0.9) : undefined;
+
+    setResult({ lines, net, gross, partnerPrice });
   };
 
   if (loading) {
@@ -173,7 +282,7 @@ export default function OverlayCalculatorPage() {
               </label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <button
-                  onClick={() => setPowderColor('noir')}
+                  onClick={() => { setPowderColor('noir'); setResult(null); }}
                   className={`p-4 rounded-lg border-2 text-sm font-semibold transition-all ${
                     powderColor === 'noir'
                       ? 'border-brand-500 ring-2 ring-brand-300 bg-white text-gray-900 shadow-md'
@@ -183,7 +292,7 @@ export default function OverlayCalculatorPage() {
                   Desmocem Powder Noir
                 </button>
                 <button
-                  onClick={() => setPowderColor('antracita')}
+                  onClick={() => { setPowderColor('antracita'); setResult(null); }}
                   className={`p-4 rounded-lg border-2 text-sm font-semibold transition-all ${
                     powderColor === 'antracita'
                       ? 'border-brand-500 ring-2 ring-brand-300 bg-white text-gray-900 shadow-md'
@@ -211,7 +320,7 @@ export default function OverlayCalculatorPage() {
                   {OVERLAY_COLORS.find(c => c.key === overlayColor)?.name}
                 </span>
                 <button
-                  onClick={() => setOverlayColor('')}
+                  onClick={() => { setOverlayColor(''); setResult(null); }}
                   className="text-xs text-red-500 hover:text-red-700 ml-2"
                 >
                   ✕ Törlés
@@ -222,7 +331,7 @@ export default function OverlayCalculatorPage() {
               {OVERLAY_COLORS.map(c => (
                 <button
                   key={c.key}
-                  onClick={() => setOverlayColor(c.key)}
+                  onClick={() => { setOverlayColor(c.key); setResult(null); }}
                   className={`flex flex-col items-center p-1 rounded border-2 transition-all hover:scale-105 ${
                     overlayColor === c.key
                       ? 'border-brand-500 ring-2 ring-brand-300 shadow-md'
@@ -248,7 +357,7 @@ export default function OverlayCalculatorPage() {
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <button
-                onClick={() => setLacquer('normal')}
+                onClick={() => { setLacquer('normal'); setResult(null); }}
                 className={`p-4 rounded-lg border-2 text-sm font-semibold transition-all ${
                   lacquer === 'normal'
                     ? 'border-brand-500 ring-2 ring-brand-300 bg-white text-gray-900 shadow-md'
@@ -258,7 +367,7 @@ export default function OverlayCalculatorPage() {
                 Sealcem DSV M70 (normál)
               </button>
               <button
-                onClick={() => setLacquer('ad')}
+                onClick={() => { setLacquer('ad'); setResult(null); }}
                 className={`p-4 rounded-lg border-2 text-sm font-semibold transition-all ${
                   lacquer === 'ad'
                     ? 'border-brand-500 ring-2 ring-brand-300 bg-white text-gray-900 shadow-md'
@@ -280,7 +389,7 @@ export default function OverlayCalculatorPage() {
               step="0.1"
               min="0"
               value={area}
-              onChange={(e) => setArea(e.target.value)}
+              onChange={(e) => { setArea(e.target.value); setResult(null); }}
               placeholder="Pl. 20"
               className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-brand-500 focus:outline-none transition text-gray-900 font-medium bg-white"
             />
@@ -289,11 +398,63 @@ export default function OverlayCalculatorPage() {
           {/* Calculate */}
           <button
             onClick={handleCalculate}
-            className="w-full bg-brand-500 hover:bg-brand-600 text-white font-semibold py-3 rounded-lg transition-colors"
+            disabled={!isFormValid}
+            className={`w-full font-semibold py-3 rounded-lg transition-colors ${
+              isFormValid
+                ? 'bg-brand-500 hover:bg-brand-600 text-white'
+                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+            }`}
           >
             Kalkuláció Készítése
           </button>
         </div>
+
+        {/* Result card */}
+        {result && (
+          <div className="w-full max-w-2xl mt-8 bg-white rounded-2xl shadow-lg p-6">
+            <h2 className="text-lg font-bold text-gray-800 mb-4">
+              Anyagszükséglet és Árak
+            </h2>
+            <ul className="divide-y divide-gray-100">
+              {result.lines.map((line, idx) => (
+                <li
+                  key={idx}
+                  className="py-2 flex items-center justify-between gap-3 text-sm"
+                >
+                  <span className="text-gray-800 font-medium flex-1">
+                    {line.name}
+                  </span>
+                  <span className="text-gray-500 shrink-0 w-28 text-right">
+                    {line.qty} × {line.packaging}
+                  </span>
+                  <span className="text-gray-900 font-semibold shrink-0 w-28 text-right">
+                    {formatFt(line.subtotal)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <div className="mt-4 pt-4 border-t border-gray-200 space-y-1">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-700 font-medium">Nettó összesen:</span>
+                <span className="text-gray-900 font-semibold">
+                  {formatFt(result.net)}
+                </span>
+              </div>
+              <div className="flex justify-between text-base">
+                <span className="text-gray-800 font-bold">Bruttó összesen:</span>
+                <span className="text-gray-900 font-bold">
+                  {formatFt(result.gross)}
+                </span>
+              </div>
+              {result.partnerPrice !== undefined && (
+                <div className="flex justify-between text-xs text-green-600 font-semibold">
+                  <span>Partneri ár (-10%):</span>
+                  <span>{formatFt(result.partnerPrice)}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Footer */}
