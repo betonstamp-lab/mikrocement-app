@@ -20,7 +20,7 @@ export const OVERLAY_COLORS = [
 export type OverlayColorKey = typeof OVERLAY_COLORS[number]['key'];
 
 // Ár minden Overlay színnél azonos
-export const OVERLAY_PRICE_PER_BAG = 26990;
+export const OVERLAY_PRICE_PER_BAG = 21252;
 export const OVERLAY_KG_PER_BAG = 25;
 // Excel szerint: 1 db 25 kg-os Overlay zsák fedi 1.25 m²-t
 // Következmény: 1 m² → 20 kg Overlay (= 0.8 zsák)
