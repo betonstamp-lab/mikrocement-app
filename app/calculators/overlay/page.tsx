@@ -10,6 +10,10 @@ import {
   OVERLAY_KG_PER_BAG,
   OVERLAY_M2_PER_BAG,
   OVERLAY_SUPPORTING_PRODUCTS,
+  RELIEF_COLORS,
+  RELIEF_PRICE,
+  RELIEF_ML,
+  RELIEF_M2_PER_UNIT,
 } from '@/lib/calculators/overlay/products';
 
 type Technology = 'por' | 'folyekony' | null;
@@ -70,6 +74,7 @@ export default function OverlayCalculatorPage() {
   const [lacquer, setLacquer] = useState<Lacquer>(null);
   const [area, setArea] = useState('');
   const [reliefEnabled, setReliefEnabled] = useState<boolean>(true);
+  const [reliefColor, setReliefColor] = useState<string>('');
   const [result, setResult] = useState<OverlayResult | null>(null);
   const [cartLoading, setCartLoading] = useState(false);
   const [cartError, setCartError] = useState<string | null>(null);
@@ -120,7 +125,8 @@ export default function OverlayCalculatorPage() {
     overlayColor !== '' &&
     lacquer !== null &&
     !isNaN(areaNum) &&
-    areaNum > 0;
+    areaNum > 0 &&
+    (technology !== 'folyekony' || !reliefEnabled || reliefColor !== '');
 
   const handleAddToCart = async () => {
     if (!result) return;
@@ -228,16 +234,16 @@ export default function OverlayCalculatorPage() {
 
       // 4) Relief — csak folyékony technológiánál, ha a felhasználó kéri
       if (reliefEnabled) {
-        const relief = OVERLAY_SUPPORTING_PRODUCTS.relief;
-        const reliefQty = Math.ceil(areaNum / relief.m2PerUnit);
+        const selectedRelief = RELIEF_COLORS.find(c => c.key === reliefColor);
+        const reliefQty = Math.ceil(areaNum / RELIEF_M2_PER_UNIT);
         lines.push({
-          name: 'Masters Relief Enhancer',
+          name: `Masters Relief Enhancer - ${selectedRelief?.name ?? reliefColor}`,
           packaging: '150 gr',
           qty: reliefQty,
-          subtotal: reliefQty * relief.price,
-          sku: relief.sku,
-          needed: areaNum * (relief.ml / relief.m2PerUnit),
-          got: reliefQty * relief.ml,
+          subtotal: reliefQty * RELIEF_PRICE,
+          sku: selectedRelief?.sku ?? '',
+          needed: areaNum * (RELIEF_ML / RELIEF_M2_PER_UNIT),
+          got: reliefQty * RELIEF_ML,
           unit: 'ml',
         });
       }
@@ -490,6 +496,54 @@ export default function OverlayCalculatorPage() {
                 >
                   Nem
                 </button>
+              </div>
+            </div>
+          )}
+
+          {/* 5b) Relief szín - csak folyékony + reliefEnabled esetén */}
+          {technology === 'folyekony' && reliefEnabled && (
+            <div>
+              <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                Relief szín
+                <Tooltip text="A Masters Relief Enhancer kontrasztot ad a bélyegzett felületnek. 8 szín közül választhat." />
+              </label>
+              {reliefColor && (
+                <div className="mb-2 flex items-center gap-2">
+                  <div
+                    className="w-6 h-6 rounded border border-gray-300"
+                    style={{ backgroundColor: RELIEF_COLORS.find(c => c.key === reliefColor)?.hex || '#ccc' }}
+                  />
+                  <span className="text-sm font-medium text-gray-800">
+                    {RELIEF_COLORS.find(c => c.key === reliefColor)?.name}
+                  </span>
+                  <button
+                    onClick={() => { setReliefColor(''); setResult(null); }}
+                    className="text-xs text-red-500 hover:text-red-700 ml-2"
+                  >
+                    ✕ Törlés
+                  </button>
+                </div>
+              )}
+              <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
+                {RELIEF_COLORS.map(c => (
+                  <button
+                    key={c.key}
+                    onClick={() => { setReliefColor(c.key); setResult(null); }}
+                    className={`flex flex-col items-center p-1 rounded border-2 transition-all hover:scale-105 ${
+                      reliefColor === c.key
+                        ? 'border-brand-500 ring-2 ring-brand-300 shadow-md'
+                        : 'border-gray-200 hover:border-gray-400'
+                    }`}
+                  >
+                    <div
+                      className="w-full aspect-square rounded-sm mb-1"
+                      style={{ backgroundColor: c.hex }}
+                    />
+                    <span className="text-[9px] leading-tight text-center text-gray-600 break-words">
+                      {c.name}
+                    </span>
+                  </button>
+                ))}
               </div>
             </div>
           )}

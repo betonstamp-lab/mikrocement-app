@@ -55,13 +55,6 @@ export const OVERLAY_SUPPORTING_PRODUCTS = {
     liters: 5,
     m2PerUnit: 50,
   },
-  relief: {
-    name: 'Masters Relief Enhancer 150mL',
-    sku: 'MREHAU-SZULO',
-    price: 18717,
-    ml: 150,
-    m2PerUnit: 30,
-  },
   lakk_normal: {
     name: 'Sealcem DSV M70 18L',
     sku: 'TT11001',
@@ -79,3 +72,21 @@ export const OVERLAY_SUPPORTING_PRODUCTS = {
 } as const;
 
 export type OverlaySupportingProductKey = keyof typeof OVERLAY_SUPPORTING_PRODUCTS;
+
+export const RELIEF_COLORS = [
+  { key: 'BLACK', name: 'Black (fekete)', sku: 'MREHAU-BLACK', hex: '#2c2c2c' },
+  { key: 'COFFEE', name: 'Coffee (kávé)', sku: 'MREHAU-COFFEE', hex: '#6f4e37' },
+  { key: 'CREAM', name: 'Cream (krém)', sku: 'MREHAU-CREAM', hex: '#f5e6c8' },
+  { key: 'LIGHT_GREY', name: 'Light Grey (világosszürke)', sku: 'MREHAU-LGREY', hex: '#b0b0b0' },
+  { key: 'MED_GREY', name: 'Med. Grey (középszürke)', sku: 'MREHAU-MGREY', hex: '#808080' },
+  { key: 'SANDSTONE', name: 'Sandstone (homokkő)', sku: 'MREHAU-SANDSTONE', hex: '#c2a882' },
+  { key: 'SEPIA', name: 'Sepia (szépia)', sku: 'MREHAU-SEPIA', hex: '#704214' },
+  { key: 'SIENNA', name: 'Sienna (szienna)', sku: 'MREHAU-SIENNA', hex: '#a0522d' },
+] as const;
+
+export type ReliefColorKey = typeof RELIEF_COLORS[number]['key'];
+
+// Minden Relief színnél azonos
+export const RELIEF_PRICE = 18717;
+export const RELIEF_ML = 150;
+export const RELIEF_M2_PER_UNIT = 30;
