@@ -21,6 +21,7 @@ interface OverlayResultLine {
   packaging: string;
   qty: number;
   subtotal: number;
+  sku: string;
 }
 
 interface OverlayResult {
@@ -44,6 +45,10 @@ export default function OverlayCalculatorPage() {
   const [lacquer, setLacquer] = useState<Lacquer>(null);
   const [area, setArea] = useState('');
   const [result, setResult] = useState<OverlayResult | null>(null);
+  const [cartLoading, setCartLoading] = useState(false);
+  const [cartError, setCartError] = useState<string | null>(null);
+
+  const isPartner = profile?.role === 'partner';
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -91,6 +96,43 @@ export default function OverlayCalculatorPage() {
     !isNaN(areaNum) &&
     areaNum > 0;
 
+  const handleAddToCart = async () => {
+    if (!result) return;
+
+    setCartLoading(true);
+    setCartError(null);
+
+    const cartItems = result.lines
+      .filter(l => l.sku && l.qty > 0)
+      .map(l => ({ sku: l.sku, qty: l.qty, name: l.name }));
+
+    if (cartItems.length === 0) {
+      setCartError('Egyik termék sem elérhető még a webshopban.');
+      setCartLoading(false);
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/shoprenter/cart', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items: cartItems }),
+      });
+
+      const data = await response.json();
+
+      if (data.redirectUrl) {
+        window.open(data.redirectUrl, '_blank');
+      } else {
+        setCartError('Nem sikerült a kosár létrehozása.');
+      }
+    } catch {
+      setCartError('Hiba történt a kosárba helyezés során.');
+    }
+
+    setCartLoading(false);
+  };
+
   const handleCalculate = () => {
     if (!isFormValid || technology === null || lacquer === null) return;
 
@@ -104,6 +146,7 @@ export default function OverlayCalculatorPage() {
       packaging: '5L',
       qty: primacemQty,
       subtotal: primacemQty * primacem.price,
+      sku: primacem.sku,
     });
 
     // 2) Overlay (kiválasztott színnel)
@@ -114,6 +157,7 @@ export default function OverlayCalculatorPage() {
       packaging: `${OVERLAY_KG_PER_BAG} kg`,
       qty: overlayQty,
       subtotal: overlayQty * OVERLAY_PRICE_PER_BAG,
+      sku: selectedColor?.sku ?? '',
     });
 
     // 3) Leválasztó
@@ -131,6 +175,7 @@ export default function OverlayCalculatorPage() {
         packaging: '10 kg',
         qty: powderQty,
         subtotal: powderQty * powder.price,
+        sku: powder.sku,
       });
     } else {
       const liquid = OVERLAY_SUPPORTING_PRODUCTS.leszvalaszto_folyekony;
@@ -140,6 +185,7 @@ export default function OverlayCalculatorPage() {
         packaging: '5L',
         qty: liquidQty,
         subtotal: liquidQty * liquid.price,
+        sku: liquid.sku,
       });
 
       // 4) Relief — csak folyékony technológiánál
@@ -150,6 +196,7 @@ export default function OverlayCalculatorPage() {
         packaging: '150 gr',
         qty: reliefQty,
         subtotal: reliefQty * relief.price,
+        sku: relief.sku,
       });
     }
 
@@ -167,6 +214,7 @@ export default function OverlayCalculatorPage() {
       packaging: '18L',
       qty: lakkQty,
       subtotal: lakkQty * lakk.price,
+      sku: lakk.sku,
     });
 
     const net = lines.reduce((s, l) => s + l.subtotal, 0);
@@ -453,6 +501,43 @@ export default function OverlayCalculatorPage() {
                 </div>
               )}
             </div>
+          </div>
+        )}
+
+        {/* Kosárba teszem */}
+        {result && (
+          <div className="w-full max-w-2xl mt-6 bg-white p-5 rounded-xl border-2 border-brand-200">
+            <button
+              onClick={handleAddToCart}
+              disabled={cartLoading}
+              className="w-full bg-gradient-to-r from-brand-500 to-brand-500 hover:from-brand-600 hover:to-brand-600 disabled:from-gray-400 disabled:to-gray-500 text-white text-lg font-bold py-4 rounded-xl shadow-lg transition-all transform hover:scale-[1.02] active:scale-[0.98] disabled:scale-100 disabled:cursor-not-allowed"
+            >
+              {cartLoading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+                  </svg>
+                  Kosár feltöltése...
+                </span>
+              ) : (
+                'Kosárba teszem'
+              )}
+            </button>
+
+            {isPartner && (
+              <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <p className="text-sm font-medium text-yellow-800">
+                  Fontos: A partneri kedvezmény igénybevételéhez a webshopban is be kell jelentkezned a fiókodba.
+                </p>
+              </div>
+            )}
+
+            {cartError && (
+              <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-sm text-red-700">{cartError}</p>
+              </div>
+            )}
           </div>
         )}
       </div>
