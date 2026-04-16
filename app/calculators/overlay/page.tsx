@@ -288,25 +288,27 @@ export default function OverlayCalculatorPage() {
     <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200 flex flex-col">
       {/* Header */}
       <header className="w-full bg-white shadow-sm py-3 px-4 md:px-8">
-        <div className="max-w-5xl mx-auto flex items-center justify-between">
+        <div className="max-w-5xl mx-auto flex items-center">
           {/* Left - User info */}
-          <div className="min-w-0 border-2 border-gray-300 rounded-lg px-3 py-2">
-            <p className="text-sm font-medium text-gray-800 truncate">
-              {profile?.name || user?.email}
-            </p>
-            {profile?.role === 'partner' ? (
-              <span className="inline-block text-[10px] font-bold text-green-700 bg-green-100 px-2 py-0.5 rounded-full mt-0.5">
-                Partner
-              </span>
-            ) : (
-              <span className="inline-block text-[10px] font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full mt-0.5">
-                Ügyfél
-              </span>
-            )}
+          <div className="flex-1 flex justify-start">
+            <div className="min-w-0 border-2 border-gray-300 rounded-lg px-3 py-2">
+              <p className="text-sm font-medium text-gray-800 truncate">
+                {profile?.name || user?.email}
+              </p>
+              {profile?.role === 'partner' ? (
+                <span className="inline-block text-[10px] font-bold text-green-700 bg-green-100 px-2 py-0.5 rounded-full mt-0.5">
+                  Partner
+                </span>
+              ) : (
+                <span className="inline-block text-[10px] font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full mt-0.5">
+                  Ügyfél
+                </span>
+              )}
+            </div>
           </div>
 
           {/* Center - Logo */}
-          <a href="https://www.betonstamp.hu" target="_blank" rel="noopener noreferrer" className="transition-opacity">
+          <a href="https://www.betonstamp.hu" target="_blank" rel="noopener noreferrer" className="shrink-0 transition-opacity">
             <Image
               src="/images/betonstamp-logo.png"
               alt="BetonStamp"
@@ -317,19 +319,21 @@ export default function OverlayCalculatorPage() {
           </a>
 
           {/* Right - Buttons */}
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => router.push('/calculators')}
-              className="text-sm text-gray-700 font-medium border-2 border-gray-300 rounded-lg px-3 py-2 hover:text-gray-900 transition-colors"
-            >
-              ← Vissza a főoldalra
-            </button>
-            <button
-              onClick={handleSignOut}
-              className="text-sm text-gray-500 font-medium border-2 border-red-500 rounded-lg px-3 py-2 hover:text-red-500 transition-colors"
-            >
-              Kijelentkezés
-            </button>
+          <div className="flex-1 flex justify-end">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => router.push('/calculators')}
+                className="text-sm text-gray-700 font-medium border-2 border-gray-300 rounded-lg px-3 py-2 hover:text-gray-900 transition-colors"
+              >
+                ← Vissza a főoldalra
+              </button>
+              <button
+                onClick={handleSignOut}
+                className="text-sm text-gray-500 font-medium border-2 border-red-500 rounded-lg px-3 py-2 hover:text-red-500 transition-colors"
+              >
+                Kijelentkezés
+              </button>
+            </div>
           </div>
         </div>
       </header>
