@@ -338,7 +338,7 @@ export default function OverlayCalculatorPage() {
           Meglévő betonfelületekre alkalmazandó 1cm vastagságú anyagrendszer kalkulátora
         </p>
 
-        <div className="w-full max-w-2xl space-y-6">
+        <div className="w-full max-w-2xl bg-white rounded-3xl shadow-2xl p-6 md:p-8 space-y-6">
           {/* 1) Terület */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
