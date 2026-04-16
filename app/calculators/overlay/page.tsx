@@ -360,37 +360,7 @@ export default function OverlayCalculatorPage() {
             />
           </div>
 
-          {/* 2) Technológia */}
-          <div>
-            <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-              Technológia
-              <Tooltip text="Por leválasztó: száraz porral történő leválasztás. Folyékony leválasztó: folyékony szerrel történő leválasztás, opcionálisan Relief domborulatkiemelővel kiegészítve." />
-            </label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <button
-                onClick={() => handleTechnologyChange('por')}
-                className={`p-4 rounded-lg border-2 text-sm font-semibold transition-all ${
-                  technology === 'por'
-                    ? 'border-brand-500 ring-2 ring-brand-300 bg-white text-gray-900 shadow-md'
-                    : 'border-gray-300 bg-white text-gray-700 hover:border-brand-500'
-                }`}
-              >
-                Por leválasztó
-              </button>
-              <button
-                onClick={() => handleTechnologyChange('folyekony')}
-                className={`p-4 rounded-lg border-2 text-sm font-semibold transition-all ${
-                  technology === 'folyekony'
-                    ? 'border-brand-500 ring-2 ring-brand-300 bg-white text-gray-900 shadow-md'
-                    : 'border-gray-300 bg-white text-gray-700 hover:border-brand-500'
-                }`}
-              >
-                Folyékony leválasztó
-              </button>
-            </div>
-          </div>
-
-          {/* 3) Overlay szín */}
+          {/* 2) Overlay szín */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Overlay szín
@@ -432,6 +402,36 @@ export default function OverlayCalculatorPage() {
                   </span>
                 </button>
               ))}
+            </div>
+          </div>
+
+          {/* 3) Technológia */}
+          <div>
+            <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+              Technológia
+              <Tooltip text="Por leválasztó: száraz porral történő leválasztás. Folyékony leválasztó: folyékony szerrel történő leválasztás, opcionálisan Relief domborulatkiemelővel kiegészítve." />
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <button
+                onClick={() => handleTechnologyChange('por')}
+                className={`p-4 rounded-lg border-2 text-sm font-semibold transition-all ${
+                  technology === 'por'
+                    ? 'border-brand-500 ring-2 ring-brand-300 bg-white text-gray-900 shadow-md'
+                    : 'border-gray-300 bg-white text-gray-700 hover:border-brand-500'
+                }`}
+              >
+                Por leválasztó
+              </button>
+              <button
+                onClick={() => handleTechnologyChange('folyekony')}
+                className={`p-4 rounded-lg border-2 text-sm font-semibold transition-all ${
+                  technology === 'folyekony'
+                    ? 'border-brand-500 ring-2 ring-brand-300 bg-white text-gray-900 shadow-md'
+                    : 'border-gray-300 bg-white text-gray-700 hover:border-brand-500'
+                }`}
+              >
+                Folyékony leválasztó
+              </button>
             </div>
           </div>
 
