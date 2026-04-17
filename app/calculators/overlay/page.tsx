@@ -54,9 +54,9 @@ const Tooltip = ({ text }: { text: string }) => {
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={(e) => { e.stopPropagation(); setOpen(false); }} />
-          <div className="absolute bottom-full mb-2 w-64 p-3 bg-gray-800 text-white text-xs rounded-lg shadow-lg z-50 leading-relaxed left-0 sm:left-1/2 sm:-translate-x-1/2">
+          <div className="fixed left-4 right-4 bottom-4 p-4 bg-gray-800 text-white text-sm rounded-lg shadow-xl z-50 leading-relaxed sm:absolute sm:left-1/2 sm:right-auto sm:bottom-full sm:top-auto sm:mb-2 sm:w-64 sm:-translate-x-1/2 sm:text-xs sm:p-3">
             {text}
-            <div className="absolute top-full left-4 sm:left-1/2 sm:-translate-x-1/2 border-4 border-transparent border-t-gray-800"></div>
+            <div className="hidden sm:block absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-800"></div>
           </div>
         </>
       )}
@@ -287,12 +287,12 @@ export default function OverlayCalculatorPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200 flex flex-col">
       {/* Header */}
-      <header className="w-full bg-white shadow-sm py-3 px-4 md:px-8">
-        <div className="max-w-5xl mx-auto flex items-center">
+      <header className="w-full bg-white shadow-sm py-3 px-3 sm:px-4 md:px-8">
+        <div className="max-w-5xl mx-auto flex items-center gap-2 sm:gap-3">
           {/* Left - User info */}
-          <div className="flex-1 flex justify-start">
-            <div className="min-w-0 border-2 border-gray-300 rounded-lg px-3 py-2">
-              <p className="text-sm font-medium text-gray-800 truncate">
+          <div className="flex-1 min-w-0 flex justify-start">
+            <div className="min-w-0 border-2 border-gray-300 rounded-lg px-2 py-1.5 sm:px-3 sm:py-2">
+              <p className="text-xs sm:text-sm font-medium text-gray-800 truncate">
                 {profile?.name || user?.email}
               </p>
               {profile?.role === 'partner' ? (
@@ -314,24 +314,32 @@ export default function OverlayCalculatorPage() {
               alt="BetonStamp"
               width={280}
               height={112}
-              className="h-12 md:h-20 w-auto"
+              className="h-10 sm:h-12 md:h-20 w-auto"
             />
           </a>
 
           {/* Right - Buttons */}
-          <div className="flex-1 flex justify-end">
-            <div className="flex items-center gap-3">
+          <div className="flex-1 min-w-0 flex justify-end">
+            <div className="flex items-center gap-2 sm:gap-3">
               <button
                 onClick={() => router.push('/calculators')}
-                className="text-sm text-gray-700 font-medium border-2 border-gray-300 rounded-lg px-3 py-2 hover:text-gray-900 transition-colors"
+                aria-label="Vissza a főoldalra"
+                className="text-sm text-gray-700 font-medium border-2 border-gray-300 rounded-lg px-2.5 py-1.5 sm:px-3 sm:py-2 hover:text-gray-900 transition-colors"
               >
-                ← Vissza a főoldalra
+                <span className="sm:hidden">←</span>
+                <span className="hidden sm:inline">← Vissza a főoldalra</span>
               </button>
               <button
                 onClick={handleSignOut}
-                className="text-sm text-gray-500 font-medium border-2 border-red-500 rounded-lg px-3 py-2 hover:text-red-500 transition-colors"
+                aria-label="Kijelentkezés"
+                className="text-sm text-gray-500 font-medium border-2 border-red-500 rounded-lg px-2.5 py-1.5 sm:px-3 sm:py-2 hover:text-red-500 transition-colors"
               >
-                Kijelentkezés
+                <span className="sm:hidden inline-flex items-center" aria-hidden="true">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                </span>
+                <span className="hidden sm:inline">Kijelentkezés</span>
               </button>
             </div>
           </div>
@@ -621,17 +629,19 @@ export default function OverlayCalculatorPage() {
               {result.lines.map((line, idx) => (
                 <li
                   key={idx}
-                  className="py-2 flex items-center justify-between gap-3 text-sm"
+                  className="py-2 text-sm flex flex-col sm:flex-row sm:items-center sm:justify-between sm:gap-3"
                 >
-                  <span className="text-gray-800 font-medium flex-1">
+                  <span className="text-gray-800 font-medium break-words sm:flex-1">
                     {line.name}
                   </span>
-                  <span className="text-gray-500 shrink-0 w-28 text-right">
-                    {line.qty} × {line.packaging}
-                  </span>
-                  <span className="text-gray-900 font-semibold shrink-0 w-28 text-right">
-                    {formatFt(line.subtotal)}
-                  </span>
+                  <div className="flex items-center justify-between gap-3 mt-1 sm:mt-0 sm:contents">
+                    <span className="text-gray-500 sm:shrink-0 sm:w-28 sm:text-right">
+                      {line.qty} × {line.packaging}
+                    </span>
+                    <span className="text-gray-900 font-semibold sm:shrink-0 sm:w-28 sm:text-right">
+                      {formatFt(line.subtotal)}
+                    </span>
+                  </div>
                 </li>
               ))}
             </ul>
@@ -664,20 +674,30 @@ export default function OverlayCalculatorPage() {
             <h3 className="font-bold text-lg mb-3 text-brand-900">
               Maradék anyagok
             </h3>
-            <div className="space-y-1">
+            <div className="divide-y divide-brand-100 sm:divide-y-0 sm:space-y-1">
               {result.lines.map((line, idx) => {
                 const leftover = line.got - line.needed;
                 if (leftover <= 0.01) return null;
                 return (
-                  <div key={idx} className="flex items-center gap-2 text-sm text-gray-700">
-                    <span className="w-2 h-2 bg-brand-600 rounded-full shrink-0"></span>
-                    <span className="flex-1">{line.name}:</span>
-                    <span className="text-gray-500">
-                      felhasznált {line.needed.toFixed(2)} {line.unit}
-                    </span>
-                    <span className="font-semibold text-brand-700">
-                      maradék {leftover.toFixed(2)} {line.unit}
-                    </span>
+                  <div key={idx} className="py-2 sm:py-0 text-sm text-gray-700">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 bg-brand-600 rounded-full shrink-0"></span>
+                      <span className="flex-1 font-semibold sm:font-normal">{line.name}:</span>
+                      <span className="hidden sm:inline text-gray-500">
+                        felhasznált {line.needed.toFixed(2)} {line.unit}
+                      </span>
+                      <span className="hidden sm:inline font-semibold text-brand-700">
+                        maradék {leftover.toFixed(2)} {line.unit}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between mt-1 pl-4 sm:hidden">
+                      <span className="text-gray-500">
+                        Felhasznált: {line.needed.toFixed(2)} {line.unit}
+                      </span>
+                      <span className="font-semibold text-brand-700">
+                        Maradék: {leftover.toFixed(2)} {line.unit}
+                      </span>
+                    </div>
                   </div>
                 );
               })}

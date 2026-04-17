@@ -43,3 +43,7 @@ next-env.d.ts
 /app/generated/prisma
 
 .vercel
+
+# Véletlenül bekerülõ nagy fájlok
+*.exe
+public/images/*.exe
