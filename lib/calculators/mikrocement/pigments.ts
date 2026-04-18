@@ -11,6 +11,21 @@ export const PIGMENT_DENSITIES: Record<string, number> = {
   'AMARILLO VAINILLA': 1.62, // becsült érték (AMARILLO alapján)
   'NEGRO HUMO': 1.56,        // becsült érték (NEGRO alapján)
   'ROJO INTENSO': 1.17,      // becsült érték (ROJO NARANJA alapján)
+  'AMARILLO LIMON': 1.62,    // becsült érték (AMARILLO alapján)
+};
+
+// Efectto recipe key -> PIGMENT_PRODUCTS / PIGMENT_DENSITIES kulcs
+export const EFECTTO_PIGMENT_TO_PRODUCT_KEY: Record<string, string> = {
+  amarillo: 'AMARILLO',
+  negro: 'NEGRO',
+  rojoNaranja: 'ROJO NARANJA',
+  rojoIntenso: 'ROJO INTENSO',
+  blanco: 'BLANCO',
+  azul: 'AZUL',
+  verde: 'VERDE',
+  negroHumo: 'NEGRO HUMO',
+  amarilloVainilla: 'AMARILLO VAINILLA',
+  amarilloLimon: 'AMARILLO LIMON',
 };
 
 // Arcocem Basic product prices, sizes and Shoprenter SKUs
@@ -24,6 +39,7 @@ export const PIGMENT_PRODUCTS: Record<string, { name: string; options: { liters:
   'AMARILLO VAINILLA': { name: 'Arcocem Basic Amarillo Vainilla', options: [{ liters: 1, price: 26995, sku: 'TT04608' }] },
   'NEGRO HUMO': { name: 'Arcocem Basic Negro Humo', options: [{ liters: 1, price: 25420, sku: 'TT04612' }] },
   'ROJO INTENSO': { name: 'Arcocem Basic Rojo Intenso', options: [{ liters: 1, price: 40160, sku: 'TT04611' }] },
+  'AMARILLO LIMON': { name: 'Arcocem Basic Amarillo Limon', options: [{ liters: 1, price: 26995, sku: 'TT04607' }] },
 };
 
 // Sealer key to pigment recipe type mapping

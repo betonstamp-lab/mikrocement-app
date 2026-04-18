@@ -90,6 +90,7 @@ export const SHOPRENTER_SKUS: Record<string, string> = {
   // === PIGMENTEK - ARCOCEM BASIC ===
   // 1L kiszerelés
   'Arcocem Basic Amarillo_1L': 'TT04003',
+  'Arcocem Basic Amarillo Limon_1L': 'TT04607',
   'Arcocem Basic Amarillo Vainilla_1L': 'TT04608',
   'Arcocem Basic Azul_1L': 'TT04006',
   'Arcocem Basic Blanco_1L': 'TT04002',

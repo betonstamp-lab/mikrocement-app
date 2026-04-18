@@ -5,7 +5,13 @@ import { PRODUCTS } from '@/lib/calculators/mikrocement/products';
 import { optimizeByM2, optimizeByKg, optimizeByLiters } from '@/lib/shared/utils';
 import { SHOPRENTER_SKUS, COMPANION_PRODUCTS } from '@/lib/shared/shoprenterskus';
 import { MikrocementSystem, Surface, CalculationResult, SurfaceCalculation, SystemProducts } from '@/types';
-import { NATTURE_COLORS, NATTURE_COLOR_HEX, SEALER_TO_PIGMENT_TYPE, NATTURE_PIGMENT_RECIPES, PIGMENT_DENSITIES, PIGMENT_PRODUCTS } from '@/lib/calculators/mikrocement/pigments';
+import { NATTURE_COLORS, NATTURE_COLOR_HEX, SEALER_TO_PIGMENT_TYPE, NATTURE_PIGMENT_RECIPES, PIGMENT_DENSITIES, PIGMENT_PRODUCTS, EFECTTO_PIGMENT_TO_PRODUCT_KEY } from '@/lib/calculators/mikrocement/pigments';
+import { EFECTTO_QUARTZ_RECIPES, EFECTTO_QUARTZ_COLORS, EfecttoPigmentRecipe } from '@/lib/calculators/pigment/efectto_quartz_pigments';
+import { EFECTTO_PU_RECIPES, EFECTTO_PU_COLORS } from '@/lib/calculators/pigment/efectto_pu_pigments';
+import { getEfecttoColorHex, sortEfecttoColors } from '@/lib/calculators/pigment/efectto_color_hex';
+
+const SORTED_EFECTTO_QUARTZ_COLORS = sortEfecttoColors(EFECTTO_QUARTZ_COLORS);
+const SORTED_EFECTTO_PU_COLORS = sortEfecttoColors(EFECTTO_PU_COLORS);
 
 const Tooltip = ({ text }: { text: string }) => {
   const [open, setOpen] = useState(false);
@@ -552,36 +558,68 @@ export default function Calculator({ profile }: { profile?: { role?: string; par
       } else {
         const vastagabb = surface.quartzFalVastagabb || 'big';
         const vekonyabb = surface.quartzFalVekonyabb || 'small';
-        
+
         const vastagabbData = sys.fal![vastagabb];
         const vekonyabbData = sys.fal![vekonyabb];
-        
+
         const vastagabbKg = totalM2 * 2 * vastagabbData.kgPerM2;
         const vekonyabbKg = totalM2 * 1 * vekonyabbData.kgPerM2;
-        
+
         result.layers.push(`2× ${vastagabbData.name}`, `1× ${vekonyabbData.name}`);
-        
+
         result.materials.push({
           category: vastagabbData.name,
           items: [{ name: vastagabbData.name, amount: vastagabbKg, unit: 'kg' }]
         });
-        
+
         result.materials.push({
           category: vekonyabbData.name,
           items: [{ name: vekonyabbData.name, amount: vekonyabbKg, unit: 'kg' }]
         });
+
+        // Pigment számítás (csak fal módban — padló Super Grain-nek nincs receptje)
+        if (surface.selectedColor && SEALER_TO_PIGMENT_TYPE[lakk]) {
+          const pigmentTotals: Record<string, number> = {};
+          const grainKgPairs: Array<['big' | 'small', number]> = [
+            [vastagabb as 'big' | 'small', vastagabbKg],
+            [vekonyabb as 'big' | 'small', vekonyabbKg],
+          ];
+          grainKgPairs.forEach(([grain, kg]) => {
+            const recipe = EFECTTO_QUARTZ_RECIPES[grain]?.[surface.selectedColor as keyof typeof EFECTTO_QUARTZ_RECIPES['small']];
+            if (!recipe) return;
+            (Object.keys(recipe) as (keyof EfecttoPigmentRecipe)[]).forEach(key => {
+              const gPerKg = recipe[key];
+              if (gPerKg === undefined || gPerKg === 0) return;
+              const productKey = EFECTTO_PIGMENT_TO_PRODUCT_KEY[key];
+              if (!productKey) return;
+              if (!pigmentTotals[productKey]) pigmentTotals[productKey] = 0;
+              pigmentTotals[productKey] += gPerKg * kg;
+            });
+          });
+
+          Object.entries(pigmentTotals).forEach(([productKey, totalGrams]) => {
+            const product = PIGMENT_PRODUCTS[productKey];
+            if (!product) return;
+            // Spec: 1 g ≈ 1 ml → totalLiters = grams / 1000
+            const totalLiters = totalGrams / 1000;
+            result.materials.push({
+              category: `Pigment - ${product.name}`,
+              items: [{ name: product.name, amount: totalLiters, unit: 'L' }]
+            });
+          });
+        }
       }
-      
+
       const lakkData = sys.lakkok[lakk];
       result.layers.push(`2× ${lakkData.name}`);
-      
+
       const lakkM2 = totalM2 * 2;
       result.materials.push({
         category: lakkData.name,
         items: [{ name: lakkData.name, amount: lakkM2, unit: 'm2' }]
       });
     }
-    
+
     // EFFECTO PU RENDSZER
     if (system === 'effectoPU') {
       const totalM2 = result.area;
@@ -614,33 +652,65 @@ export default function Calculator({ profile }: { profile?: { role?: string; par
       const totalPuLayers = surface.puLayers.big + surface.puLayers.medium + surface.puLayers.small;
       if (totalPuLayers === 0) return result;
       
+      const puKgByGrain: Record<'big' | 'medium' | 'small', number> = { big: 0, medium: 0, small: 0 };
+
       (['big', 'medium', 'small'] as const).forEach(puType => {
         if (surface.puLayers[puType] > 0) {
           const puName = puType.toUpperCase();
           const layerCount = surface.puLayers[puType];
           result.layers.push(`${layerCount}× Efectto PU ${puName}`);
-          
+
           const puData = sys.mikrocementek![puType];
           const kgPerLayer = puData.kgPerM2 / 3;
           const puKg = totalM2 * layerCount * kgPerLayer;
-          
+          puKgByGrain[puType] = puKg;
+
           result.materials.push({
             category: `Efectto PU ${puName}`,
             items: [{ name: puData.name, amount: puKg, unit: 'kg' }]
           });
         }
       });
-      
+
       const lakkData = sys.lakkok[lakk];
       result.layers.push(`2× ${lakkData.name}`);
-      
+
       const lakkM2 = totalM2 * 2;
       result.materials.push({
         category: lakkData.name,
         items: [{ name: lakkData.name, amount: lakkM2, unit: 'm2' }]
       });
+
+      // Pigment számítás
+      if (surface.selectedColor && SEALER_TO_PIGMENT_TYPE[lakk]) {
+        const pigmentTotals: Record<string, number> = {};
+        (['big', 'medium', 'small'] as const).forEach(puType => {
+          const kg = puKgByGrain[puType];
+          if (kg <= 0) return;
+          const recipe = EFECTTO_PU_RECIPES[puType]?.[surface.selectedColor as keyof typeof EFECTTO_PU_RECIPES['small']];
+          if (!recipe) return;
+          (Object.keys(recipe) as (keyof EfecttoPigmentRecipe)[]).forEach(key => {
+            const gPerKg = recipe[key];
+            if (gPerKg === undefined || gPerKg === 0) return;
+            const productKey = EFECTTO_PIGMENT_TO_PRODUCT_KEY[key];
+            if (!productKey) return;
+            if (!pigmentTotals[productKey]) pigmentTotals[productKey] = 0;
+            pigmentTotals[productKey] += gPerKg * kg;
+          });
+        });
+
+        Object.entries(pigmentTotals).forEach(([productKey, totalGrams]) => {
+          const product = PIGMENT_PRODUCTS[productKey];
+          if (!product) return;
+          const totalLiters = totalGrams / 1000;
+          result.materials.push({
+            category: `Pigment - ${product.name}`,
+            items: [{ name: product.name, amount: totalLiters, unit: 'L' }]
+          });
+        });
+      }
     }
-    
+
     return result;
   };
 
@@ -989,13 +1059,13 @@ export default function Calculator({ profile }: { profile?: { role?: string; par
       Object.keys(sys.lakkok).forEach(lakkKey => {
         const lakkData = sys.lakkok[lakkKey];
         if (!lakkData || !lakkData.name || !lakkData.options) return;
-        
+
         const matchingKeys = Object.keys(aggregated).filter(k => k.startsWith(lakkData.name));
-        
+
         if (matchingKeys.length > 0) {
           const totalM2 = matchingKeys.reduce((sum, k) => sum + aggregated[k].amount, 0);
           const lakkPkgs = optimizeByM2(totalM2, lakkData.options);
-          
+
           res.items.push({
             cat: `${lakkData.name} (2 réteg)`,
             pkgs: lakkPkgs.map(p => ({ ...p, name: `${lakkData.name} ${p.liters}L`, qty: p.qty || 0 })),
@@ -1003,8 +1073,28 @@ export default function Calculator({ profile }: { profile?: { role?: string; par
           });
         }
       });
+
+      // EFFECTO QUARTZ - Pigmentek
+      Object.keys(aggregated).forEach(key => {
+        if (key.startsWith('Arcocem Basic')) {
+          const [name] = key.split('_');
+          const totalLiters = aggregated[key].amount;
+
+          const productKey = Object.keys(PIGMENT_PRODUCTS).find(k => PIGMENT_PRODUCTS[k].name === name);
+          if (productKey) {
+            const product = PIGMENT_PRODUCTS[productKey];
+            const pkgs = optimizeByLiters(totalLiters, product.options);
+
+            res.items.push({
+              cat: `${product.name} (összesített)`,
+              pkgs: pkgs.map(p => ({ ...p, name: `${product.name} ${p.liters}L`, qty: p.qty || 0 })),
+              price: pkgs.reduce((s, p) => s + p.price * (p.qty || 0), 0)
+            });
+          }
+        }
+      });
     }
-    
+
     // EFFECTO PU - Alapozó
     if (system === 'effectoPU') {
       Object.keys(aggregated).forEach(key => {
@@ -1068,13 +1158,13 @@ export default function Calculator({ profile }: { profile?: { role?: string; par
       Object.keys(sys.lakkok).forEach(lakkKey => {
         const lakkData = sys.lakkok[lakkKey];
         if (!lakkData || !lakkData.name || !lakkData.options) return;
-        
+
         const matchingKeys = Object.keys(aggregated).filter(k => k.startsWith(lakkData.name));
-        
+
         if (matchingKeys.length > 0) {
           const totalM2 = matchingKeys.reduce((sum, k) => sum + aggregated[k].amount, 0);
           const lakkPkgs = optimizeByM2(totalM2, lakkData.options);
-          
+
           res.items.push({
             cat: `${lakkData.name} (2 réteg)`,
             pkgs: lakkPkgs.map(p => ({ ...p, name: `${lakkData.name} ${p.liters}L`, qty: p.qty || 0 })),
@@ -1082,8 +1172,28 @@ export default function Calculator({ profile }: { profile?: { role?: string; par
           });
         }
       });
+
+      // EFFECTO PU - Pigmentek
+      Object.keys(aggregated).forEach(key => {
+        if (key.startsWith('Arcocem Basic')) {
+          const [name] = key.split('_');
+          const totalLiters = aggregated[key].amount;
+
+          const productKey = Object.keys(PIGMENT_PRODUCTS).find(k => PIGMENT_PRODUCTS[k].name === name);
+          if (productKey) {
+            const product = PIGMENT_PRODUCTS[productKey];
+            const pkgs = optimizeByLiters(totalLiters, product.options);
+
+            res.items.push({
+              cat: `${product.name} (összesített)`,
+              pkgs: pkgs.map(p => ({ ...p, name: `${product.name} ${p.liters}L`, qty: p.qty || 0 })),
+              price: pkgs.reduce((s, p) => s + p.price * (p.qty || 0), 0)
+            });
+          }
+        }
+      });
     }
-    
+
     res.total = res.items.reduce((sum, item) => sum + item.price, 0);
     
     return res;
@@ -1415,14 +1525,14 @@ export default function Calculator({ profile }: { profile?: { role?: string; par
         if (lakkData && materialsByCategory[lakkData.name]) {
           const mat = materialsByCategory[lakkData.name];
           const pkgs = optimizeByM2(mat.amount, lakkData.options);
-          
+
           const gotLiters = pkgs.reduce((sum, p) => sum + (p.liters || 0) * (p.qty || 0), 0);
           const firstOption = lakkData.options[0];
           const litersPerM2 = firstOption.liters && firstOption.m2 ? firstOption.liters / firstOption.m2 : 0;
           const neededLiters = mat.amount * litersPerM2;
-          
+
           const price = pkgs.reduce((s, p) => s + p.price * (p.qty || 0), 0);
-          
+
           items.push({
             cat: `${lakkData.name} (2 réteg)`,
             pkgs: pkgs.map(p => ({ ...p, name: `${lakkData.name} ${p.liters}L`, qty: p.qty || 0 })),
@@ -1433,6 +1543,32 @@ export default function Calculator({ profile }: { profile?: { role?: string; par
             unit: 'L'
           });
           total += price;
+        }
+      });
+
+      // EFECTTO QUARTZ - Pigmentek
+      Object.keys(materialsByCategory).forEach(cat => {
+        if (cat.startsWith('Pigment - ')) {
+          const mat = materialsByCategory[cat];
+          const productKey = Object.keys(PIGMENT_PRODUCTS).find(k => PIGMENT_PRODUCTS[k].name === mat.name);
+          if (productKey) {
+            const product = PIGMENT_PRODUCTS[productKey];
+            const neededLiters = mat.amount;
+            const pkgs = optimizeByLiters(neededLiters, product.options);
+            const gotLiters = pkgs.reduce((sum, p) => sum + (p.liters || 0) * (p.qty || 0), 0);
+            const price = pkgs.reduce((s, p) => s + p.price * (p.qty || 0), 0);
+
+            items.push({
+              cat: cat.replace('Pigment - ', ''),
+              pkgs: pkgs.map(p => ({ ...p, name: `${product.name} ${p.liters}L`, qty: p.qty || 0 })),
+              price,
+              needed: neededLiters,
+              got: gotLiters,
+              leftover: gotLiters - neededLiters,
+              unit: 'L'
+            });
+            total += price;
+          }
         }
       });
     }
@@ -1502,14 +1638,14 @@ export default function Calculator({ profile }: { profile?: { role?: string; par
         if (lakkData && materialsByCategory[lakkData.name]) {
           const mat = materialsByCategory[lakkData.name];
           const pkgs = optimizeByM2(mat.amount, lakkData.options);
-          
+
           const gotLiters = pkgs.reduce((sum, p) => sum + (p.liters || 0) * (p.qty || 0), 0);
           const firstOption = lakkData.options[0];
           const litersPerM2 = firstOption.liters && firstOption.m2 ? firstOption.liters / firstOption.m2 : 0;
           const neededLiters = mat.amount * litersPerM2;
-          
+
           const price = pkgs.reduce((s, p) => s + p.price * (p.qty || 0), 0);
-          
+
           items.push({
             cat: `${lakkData.name} (2 réteg)`,
             pkgs: pkgs.map(p => ({ ...p, name: `${lakkData.name} ${p.liters}L`, qty: p.qty || 0 })),
@@ -1520,6 +1656,32 @@ export default function Calculator({ profile }: { profile?: { role?: string; par
             unit: 'L'
           });
           total += price;
+        }
+      });
+
+      // EFECTTO PU - Pigmentek
+      Object.keys(materialsByCategory).forEach(cat => {
+        if (cat.startsWith('Pigment - ')) {
+          const mat = materialsByCategory[cat];
+          const productKey = Object.keys(PIGMENT_PRODUCTS).find(k => PIGMENT_PRODUCTS[k].name === mat.name);
+          if (productKey) {
+            const product = PIGMENT_PRODUCTS[productKey];
+            const neededLiters = mat.amount;
+            const pkgs = optimizeByLiters(neededLiters, product.options);
+            const gotLiters = pkgs.reduce((sum, p) => sum + (p.liters || 0) * (p.qty || 0), 0);
+            const price = pkgs.reduce((s, p) => s + p.price * (p.qty || 0), 0);
+
+            items.push({
+              cat: cat.replace('Pigment - ', ''),
+              pkgs: pkgs.map(p => ({ ...p, name: `${product.name} ${p.liters}L`, qty: p.qty || 0 })),
+              price,
+              needed: neededLiters,
+              got: gotLiters,
+              leftover: gotLiters - neededLiters,
+              unit: 'L'
+            });
+            total += price;
+          }
         }
       });
     }
@@ -2040,6 +2202,120 @@ export default function Calculator({ profile }: { profile?: { role?: string; par
                                   <span className="text-[9px] leading-tight text-center text-gray-600 break-words">{color}</span>
                                 </button>
                               ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {system === 'effectoQuartz' && surface.lakk && SEALER_TO_PIGMENT_TYPE[surface.lakk] && (surface.surfaceType || 'padlo') === 'fal' && (
+                          <div className="mt-3">
+                            <label className="block text-xs font-medium text-gray-600 mb-2">
+                              Szín választása (opcionális):
+                            </label>
+                            {surface.selectedColor && (() => {
+                              const selectedHex = getEfecttoColorHex(surface.selectedColor);
+                              return (
+                                <div className="mb-2 flex items-center gap-2">
+                                  <div className="w-6 h-6 rounded border border-gray-300" style={{ backgroundColor: selectedHex || '#e5e7eb' }} />
+                                  <span className={`text-sm font-medium text-gray-800 ${!selectedHex ? 'line-through decoration-red-500 decoration-2' : ''}`}>{surface.selectedColor}</span>
+                                  <button
+                                    onClick={() => updateSurface(surface.id, 'selectedColor', null)}
+                                    className="text-xs text-red-500 hover:text-red-700 ml-2"
+                                  >
+                                    ✕ Törlés
+                                  </button>
+                                </div>
+                              );
+                            })()}
+                            <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
+                              {SORTED_EFECTTO_QUARTZ_COLORS.map(color => {
+                                const hex = getEfecttoColorHex(color);
+                                return (
+                                  <button
+                                    key={color}
+                                    onClick={() => updateSurface(surface.id, 'selectedColor', color)}
+                                    className={`flex flex-col items-center p-1 rounded border-2 transition-all hover:scale-105 ${
+                                      surface.selectedColor === color
+                                        ? 'border-brand-500 ring-2 ring-brand-300 shadow-md'
+                                        : 'border-gray-200 hover:border-gray-400'
+                                    }`}
+                                  >
+                                    <div className="relative w-full aspect-square rounded-sm mb-1 overflow-hidden" style={{ backgroundColor: hex || '#e5e7eb' }}>
+                                      {!hex && (
+                                        <svg
+                                          className="absolute inset-0 w-full h-full text-red-500"
+                                          viewBox="0 0 24 24"
+                                          fill="none"
+                                          stroke="currentColor"
+                                          strokeWidth={3}
+                                          strokeLinecap="round"
+                                          aria-hidden="true"
+                                        >
+                                          <line x1="3" y1="3" x2="21" y2="21" />
+                                          <line x1="21" y1="3" x2="3" y2="21" />
+                                        </svg>
+                                      )}
+                                    </div>
+                                    <span className={`text-[9px] leading-tight text-center text-gray-600 break-words ${!hex ? 'line-through decoration-red-500' : ''}`}>{color}</span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+
+                        {system === 'effectoPU' && surface.lakk && SEALER_TO_PIGMENT_TYPE[surface.lakk] && (
+                          <div className="mt-3">
+                            <label className="block text-xs font-medium text-gray-600 mb-2">
+                              Szín választása (opcionális):
+                            </label>
+                            {surface.selectedColor && (() => {
+                              const selectedHex = getEfecttoColorHex(surface.selectedColor);
+                              return (
+                                <div className="mb-2 flex items-center gap-2">
+                                  <div className="w-6 h-6 rounded border border-gray-300" style={{ backgroundColor: selectedHex || '#e5e7eb' }} />
+                                  <span className={`text-sm font-medium text-gray-800 ${!selectedHex ? 'line-through decoration-red-500 decoration-2' : ''}`}>{surface.selectedColor}</span>
+                                  <button
+                                    onClick={() => updateSurface(surface.id, 'selectedColor', null)}
+                                    className="text-xs text-red-500 hover:text-red-700 ml-2"
+                                  >
+                                    ✕ Törlés
+                                  </button>
+                                </div>
+                              );
+                            })()}
+                            <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
+                              {SORTED_EFECTTO_PU_COLORS.map(color => {
+                                const hex = getEfecttoColorHex(color);
+                                return (
+                                  <button
+                                    key={color}
+                                    onClick={() => updateSurface(surface.id, 'selectedColor', color)}
+                                    className={`flex flex-col items-center p-1 rounded border-2 transition-all hover:scale-105 ${
+                                      surface.selectedColor === color
+                                        ? 'border-brand-500 ring-2 ring-brand-300 shadow-md'
+                                        : 'border-gray-200 hover:border-gray-400'
+                                    }`}
+                                  >
+                                    <div className="relative w-full aspect-square rounded-sm mb-1 overflow-hidden" style={{ backgroundColor: hex || '#e5e7eb' }}>
+                                      {!hex && (
+                                        <svg
+                                          className="absolute inset-0 w-full h-full text-red-500"
+                                          viewBox="0 0 24 24"
+                                          fill="none"
+                                          stroke="currentColor"
+                                          strokeWidth={3}
+                                          strokeLinecap="round"
+                                          aria-hidden="true"
+                                        >
+                                          <line x1="3" y1="3" x2="21" y2="21" />
+                                          <line x1="21" y1="3" x2="3" y2="21" />
+                                        </svg>
+                                      )}
+                                    </div>
+                                    <span className={`text-[9px] leading-tight text-center text-gray-600 break-words ${!hex ? 'line-through decoration-red-500' : ''}`}>{color}</span>
+                                  </button>
+                                );
+                              })}
                             </div>
                           </div>
                         )}
