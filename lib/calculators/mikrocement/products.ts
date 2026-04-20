@@ -257,7 +257,7 @@ export const PRODUCTS: Record<string, SystemProducts> = {
         tooltip: 'Az Efectto Quartz SMALL GRAIN egy dekoratív, tartós és használatra kész, folytonos bevonat, amelyet kifejezetten belső falak és padlók előkészítő rétegeként terveztek.',
         options: [
           { kg: 6, price: 32340 },
-          { kg: 17, price: 75487 }
+          { kg: 17, price: 78480 }
         ]
       }
     },
