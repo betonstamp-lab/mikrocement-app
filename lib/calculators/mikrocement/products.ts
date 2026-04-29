@@ -19,7 +19,7 @@ export const PRODUCTS: Record<string, SystemProducts> = {
         info: 'Nem nedvszívó alapozó',
         tooltip: 'Akril kopolimereken alapuló alapozó, amely tapadóhídként szolgál a nem nedvszívó felületek és a Topciment® mikrocement között.',
         options: [
-          { liters: 1, price: 7199, m2: 10 },
+          { liters: 1, price: 7195, m2: 10 },
           { liters: 5, price: 28040, m2: 50 }
         ]
       },
@@ -29,7 +29,7 @@ export const PRODUCTS: Record<string, SystemProducts> = {
         tooltip: 'Kétkomponensű, oldószermentes epoxirendszer, 100%-os szárazanyag-tartalommal. Alkalmazása alapozóként javasolt a kapilláris nedvesség elleni védelemre, illetve párazáró rétegként.',
         options: [
           { kg: 5, price: 71520, m2: 10 },
-          { kg: 20, price: 190395, m2: 40 }
+          { kg: 20, price: 241240, m2: 40 }
         ]
       },
       grip: {
@@ -197,7 +197,7 @@ export const PRODUCTS: Record<string, SystemProducts> = {
         info: 'Nem nedvszívó alapozó',
         tooltip: 'Akril kopolimereken alapuló alapozó, amely tapadóhídként szolgál a nem nedvszívó felületek és a Topciment® mikrocement között.',
         options: [
-          { liters: 1, price: 7199, m2: 10 },
+          { liters: 1, price: 7195, m2: 10 },
           { liters: 5, price: 28040, m2: 50 }
         ]
       },
@@ -207,7 +207,7 @@ export const PRODUCTS: Record<string, SystemProducts> = {
         tooltip: 'Kétkomponensű, oldószermentes epoxirendszer, 100%-os szárazanyag-tartalommal. Alkalmazása alapozóként javasolt a kapilláris nedvesség elleni védelemre, illetve párazáró rétegként.',
         options: [
           { kg: 5, price: 71520, m2: 10 },
-          { kg: 20, price: 190395, m2: 40 }
+          { kg: 20, price: 241240, m2: 40 }
         ]
       },
       grip: {
@@ -367,7 +367,7 @@ export const PRODUCTS: Record<string, SystemProducts> = {
         info: 'Nem nedvszívó alapozó',
         tooltip: 'Akril kopolimereken alapuló alapozó, amely tapadóhídként szolgál a nem nedvszívó felületek és a Topciment® mikrocement között.',
         options: [
-          { liters: 1, price: 7199, m2: 10 },
+          { liters: 1, price: 7195, m2: 10 },
           { liters: 5, price: 28040, m2: 50 }
         ]
       },
@@ -377,7 +377,7 @@ export const PRODUCTS: Record<string, SystemProducts> = {
         tooltip: 'Kétkomponensű, oldószermentes epoxirendszer, 100%-os szárazanyag-tartalommal. Alkalmazása alapozóként javasolt a kapilláris nedvesség elleni védelemre, illetve párazáró rétegként.',
         options: [
           { kg: 5, price: 71520, m2: 10 },
-          { kg: 20, price: 190395, m2: 40 }
+          { kg: 20, price: 241240, m2: 40 }
         ]
       },
       grip: {
@@ -395,7 +395,7 @@ export const PRODUCTS: Record<string, SystemProducts> = {
         tooltip: 'Az Efectto PU BIG GRAIN egy nagy teljesítményű, kétkomponensű, vízalapú poliuretán mikrocement, folytonos dekoratív felületek kialakítására, beltérben és kültérben egyaránt.',
         options: [
           { kg: 10.875, price: 80605 },
-          { kg: 2.21, price: 33412 }
+          { kg: 2.21, price: 33595 }
         ]
       },
       medium: {
@@ -405,7 +405,7 @@ export const PRODUCTS: Record<string, SystemProducts> = {
         tooltip: 'Az Efectto PU MEDIUM GRAIN egy nagy teljesítményű, kétkomponensű, vízalapú poliuretán mikrocement, folytonos dekoratív felületek kialakítására, beltérben és kültérben egyaránt.',
         options: [
           { kg: 10.875, price: 80605 },
-          { kg: 2.21, price: 33517 }
+          { kg: 2.21, price: 33595 }
         ]
       },
       small: {
@@ -415,22 +415,22 @@ export const PRODUCTS: Record<string, SystemProducts> = {
         tooltip: 'Az Efectto PU SMALL GRAIN egy nagy teljesítményű, kétkomponensű, vízalapú poliuretán mikrocement, folytonos dekoratív felületek kialakítására, beltérben és kültérben egyaránt.',
         options: [
           { kg: 10.875, price: 80605 },
-          { kg: 2.21, price: 33592 }
+          { kg: 2.21, price: 33595 }
         ]
       }
     },
     mikroOptions: {
       big: [
         { kg: 10.875, price: 80605 },
-        { kg: 2.21, price: 33412 }
+        { kg: 2.21, price: 33595 }
       ],
       medium: [
         { kg: 10.875, price: 80605 },
-        { kg: 2.21, price: 33517 }
+        { kg: 2.21, price: 33595 }
       ],
       small: [
         { kg: 10.875, price: 80605 },
-        { kg: 2.21, price: 33592 }
+        { kg: 2.21, price: 33595 }
       ]
     },
     lakkok: {
