@@ -18,6 +18,7 @@ import {
   RELIEF_ML,
   RELIEF_M2_PER_UNIT,
 } from '@/lib/calculators/overlay/products';
+import PriceBreakdown from '@/components/PriceBreakdown';
 
 type Technology = 'por' | 'folyekony' | null;
 type Lacquer = 'normal' | 'ad' | null;
@@ -27,6 +28,7 @@ interface OverlayResultLine {
   packaging: string;
   qty: number;
   subtotal: number;
+  anyagszuksegletSubtotal: number;
   sku: string;
   needed: number;
   got: number;
@@ -37,7 +39,10 @@ interface OverlayResult {
   lines: OverlayResultLine[];
   net: number;
   gross: number;
+  anyagszuksegletNet: number;
+  anyagszuksegletGross: number;
   partnerPrice?: number;
+  anyagszuksegletPartnerPrice?: number;
 }
 
 const formatFt = (n: number) => `${n.toLocaleString('hu-HU')} Ft`;
@@ -173,12 +178,21 @@ export default function OverlayCalculatorPage() {
   const handleCalculate = () => {
     if (!isFormValid || technology === null || lacquer === null) return;
 
+    const buildLine = (base: Omit<OverlayResultLine, 'anyagszuksegletSubtotal'>): OverlayResultLine => {
+      const leftover = base.got - base.needed;
+      const anyagszuksegletSubtotal =
+        leftover > 0.01 && base.got > 0
+          ? base.subtotal - leftover * (base.subtotal / base.got)
+          : base.subtotal;
+      return { ...base, anyagszuksegletSubtotal };
+    };
+
     const lines: OverlayResultLine[] = [];
 
     // 1) Primacem Plus
     const primacem = OVERLAY_SUPPORTING_PRODUCTS.primacem_plus;
     const primacemQty = Math.ceil(areaNum / primacem.m2PerUnit);
-    lines.push({
+    lines.push(buildLine({
       name: 'Primacem Plus',
       packaging: '5L',
       qty: primacemQty,
@@ -187,12 +201,12 @@ export default function OverlayCalculatorPage() {
       needed: areaNum * (primacem.liters / primacem.m2PerUnit),
       got: primacemQty * primacem.liters,
       unit: 'L',
-    });
+    }));
 
     // 2) Overlay (kiválasztott színnel)
     const selectedColor = OVERLAY_COLORS.find(c => c.key === overlayColor);
     const overlayQty = Math.ceil(areaNum / OVERLAY_M2_PER_BAG);
-    lines.push({
+    lines.push(buildLine({
       name: `Overlay ${selectedColor?.name ?? overlayColor}`,
       packaging: `${OVERLAY_KG_PER_BAG} kg`,
       qty: overlayQty,
@@ -201,13 +215,13 @@ export default function OverlayCalculatorPage() {
       needed: areaNum * (OVERLAY_KG_PER_BAG / OVERLAY_M2_PER_BAG),
       got: overlayQty * OVERLAY_KG_PER_BAG,
       unit: 'kg',
-    });
+    }));
 
     // 3) Leválasztó
     if (technology === 'por') {
       const selectedPowder = DESMOCEM_POWDER_COLORS.find(c => c.key === powderColor);
       const powderQty = Math.ceil(areaNum / DESMOCEM_POWDER_M2_PER_UNIT);
-      lines.push({
+      lines.push(buildLine({
         name: `Desmocem Powder ${selectedPowder?.name ?? powderColor}`,
         packaging: '10 kg',
         qty: powderQty,
@@ -216,11 +230,11 @@ export default function OverlayCalculatorPage() {
         needed: areaNum * (DESMOCEM_POWDER_KG / DESMOCEM_POWDER_M2_PER_UNIT),
         got: powderQty * DESMOCEM_POWDER_KG,
         unit: 'kg',
-      });
+      }));
     } else {
       const liquid = OVERLAY_SUPPORTING_PRODUCTS.leszvalaszto_folyekony;
       const liquidQty = Math.ceil(areaNum / liquid.m2PerUnit);
-      lines.push({
+      lines.push(buildLine({
         name: 'Desmocem Liquid',
         packaging: '5L',
         qty: liquidQty,
@@ -229,13 +243,13 @@ export default function OverlayCalculatorPage() {
         needed: areaNum * (liquid.liters / liquid.m2PerUnit),
         got: liquidQty * liquid.liters,
         unit: 'L',
-      });
+      }));
 
       // 4) Relief — csak folyékony technológiánál, ha a felhasználó kéri
       if (reliefEnabled) {
         const selectedRelief = RELIEF_COLORS.find(c => c.key === reliefColor);
         const reliefQty = Math.ceil(areaNum / RELIEF_M2_PER_UNIT);
-        lines.push({
+        lines.push(buildLine({
           name: `Masters Relief Enhancer - ${selectedRelief?.name ?? reliefColor}`,
           packaging: '150 gr',
           qty: reliefQty,
@@ -244,7 +258,7 @@ export default function OverlayCalculatorPage() {
           needed: areaNum * (RELIEF_ML / RELIEF_M2_PER_UNIT),
           got: reliefQty * RELIEF_ML,
           unit: 'ml',
-        });
+        }));
       }
     }
 
@@ -254,7 +268,7 @@ export default function OverlayCalculatorPage() {
         ? OVERLAY_SUPPORTING_PRODUCTS.lakk_normal
         : OVERLAY_SUPPORTING_PRODUCTS.lakk_ad;
     const lakkQty = Math.ceil(areaNum / lakk.m2PerUnit);
-    lines.push({
+    lines.push(buildLine({
       name:
         lacquer === 'normal'
           ? 'Sealcem DSV M70 (normál)'
@@ -266,14 +280,25 @@ export default function OverlayCalculatorPage() {
       needed: areaNum * (lakk.liters / lakk.m2PerUnit),
       got: lakkQty * lakk.liters,
       unit: 'L',
-    });
+    }));
 
     const net = lines.reduce((s, l) => s + l.subtotal, 0);
     const gross = Math.round(net * 1.27);
-    const partnerPrice =
-      profile?.role === 'partner' ? Math.round(gross * 0.9) : undefined;
+    const anyagszuksegletNet = lines.reduce((s, l) => s + l.anyagszuksegletSubtotal, 0);
+    const anyagszuksegletGross = Math.round(anyagszuksegletNet * 1.27);
+    const isPartner = profile?.role === 'partner';
+    const partnerPrice = isPartner ? Math.round(gross * 0.9) : undefined;
+    const anyagszuksegletPartnerPrice = isPartner ? Math.round(anyagszuksegletGross * 0.9) : undefined;
 
-    setResult({ lines, net, gross, partnerPrice });
+    setResult({
+      lines,
+      net,
+      gross,
+      anyagszuksegletNet,
+      anyagszuksegletGross,
+      partnerPrice,
+      anyagszuksegletPartnerPrice,
+    });
   };
 
   if (loading) {
@@ -626,44 +651,58 @@ export default function OverlayCalculatorPage() {
               Anyagszükséglet és Árak
             </h2>
             <ul className="divide-y divide-gray-100">
-              {result.lines.map((line, idx) => (
-                <li
-                  key={idx}
-                  className="py-2 text-sm flex flex-col sm:flex-row sm:items-center sm:justify-between sm:gap-3"
-                >
-                  <span className="text-gray-800 font-medium break-words sm:flex-1">
-                    {line.name}
-                  </span>
-                  <div className="flex items-center justify-between gap-3 mt-1 sm:mt-0 sm:contents">
-                    <span className="text-gray-500 sm:shrink-0 sm:w-28 sm:text-right">
-                      {line.qty} × {line.packaging}
-                    </span>
-                    <span className="text-gray-900 font-semibold sm:shrink-0 sm:w-28 sm:text-right">
-                      {formatFt(line.subtotal)}
-                    </span>
-                  </div>
-                </li>
-              ))}
+              {result.lines.map((line, idx) => {
+                const isSingle = Math.abs(line.subtotal - line.anyagszuksegletSubtotal) < 1;
+                return (
+                  <li key={idx} className="py-3 text-sm">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+                      <span className="text-gray-800 font-medium break-words sm:flex-1">
+                        {line.name}
+                      </span>
+                      <span className="text-gray-500 sm:shrink-0 sm:w-28 sm:text-right">
+                        {line.qty} × {line.packaging}
+                      </span>
+                    </div>
+                    <PriceBreakdown
+                      variant="line"
+                      kiszerelesPrice={line.subtotal}
+                      anyagszuksegletPrice={line.anyagszuksegletSubtotal}
+                      showSinglePrice={isSingle}
+                    />
+                  </li>
+                );
+              })}
             </ul>
-            <div className="mt-4 pt-4 border-t border-gray-200 space-y-1">
+            <div className="mt-4 pt-4 border-t border-gray-200 space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-700 font-medium">Nettó összesen:</span>
                 <span className="text-gray-900 font-semibold">
                   {formatFt(result.net)}
                 </span>
               </div>
-              <div className="flex justify-between text-base">
-                <span className="text-gray-800 font-bold">Bruttó összesen:</span>
-                <span className="text-gray-900 font-bold">
-                  {formatFt(result.gross)}
-                </span>
-              </div>
-              {result.partnerPrice !== undefined && (
-                <div className="flex justify-between text-xs text-green-600 font-semibold">
-                  <span>Partneri ár (-10%):</span>
-                  <span>{formatFt(result.partnerPrice)}</span>
+              {profile?.role === 'partner' ? (
+                <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
+                  <span className="text-base font-bold text-gray-800">Bruttó összesen:</span>
+                  <PriceBreakdown
+                    variant="total"
+                    kiszerelesPrice={result.partnerPrice ?? 0}
+                    anyagszuksegletPrice={result.anyagszuksegletPartnerPrice ?? 0}
+                    partnerMode={true}
+                  />
+                </div>
+              ) : (
+                <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
+                  <span className="text-base font-bold text-gray-800">Bruttó összesen:</span>
+                  <PriceBreakdown
+                    variant="total"
+                    kiszerelesPrice={result.gross}
+                    anyagszuksegletPrice={result.anyagszuksegletGross}
+                  />
                 </div>
               )}
+              <p className="text-xs text-gray-500 mt-2">
+                Az anyagszükséglet szerinti ár a maradék anyag értékének levonásával számolt.
+              </p>
             </div>
           </div>
         )}
