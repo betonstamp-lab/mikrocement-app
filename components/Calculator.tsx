@@ -9,6 +9,7 @@ import { NATTURE_COLORS, NATTURE_COLOR_HEX, SEALER_TO_PIGMENT_TYPE, NATTURE_PIGM
 import { EFECTTO_QUARTZ_RECIPES, EFECTTO_QUARTZ_COLORS, EfecttoPigmentRecipe } from '@/lib/calculators/pigment/efectto_quartz_pigments';
 import { EFECTTO_PU_RECIPES, EFECTTO_PU_COLORS } from '@/lib/calculators/pigment/efectto_pu_pigments';
 import { getEfecttoColorHex, sortEfecttoColors } from '@/lib/calculators/pigment/efectto_color_hex';
+import PriceBreakdown from '@/components/PriceBreakdown';
 
 const SORTED_EFECTTO_QUARTZ_COLORS = sortEfecttoColors(EFECTTO_QUARTZ_COLORS);
 const SORTED_EFECTTO_PU_COLORS = sortEfecttoColors(EFECTTO_PU_COLORS);
@@ -2533,31 +2534,12 @@ export default function Calculator({ profile }: { profile?: { role?: string; par
                                 );
                               })}
                             </div>
-                            <div className="mt-2 pt-2 border-t border-gray-300 text-sm">
-                              {isPartner ? (
-                                <>
-                                  <div className="flex justify-between font-semibold">
-                                    <span className="text-gray-600">Listaár:</span>
-                                    <span className="text-gray-400 line-through">{partnerItemPrice.toLocaleString('hu-HU')} Ft</span>
-                                  </div>
-                                  <div className="flex justify-between font-semibold mt-1">
-                                    <span className="text-green-700">Partneri ár ({discountPercent}% kedvezmény):</span>
-                                    <span className="text-green-600 font-bold">{Math.round(partnerItemPrice * discountMultiplier).toLocaleString('hu-HU')} Ft</span>
-                                  </div>
-                                </>
-                              ) : (
-                                <>
-                                  <div className="flex justify-between font-semibold">
-                                    <span className="text-gray-600">Kiszerelés szerint:</span>
-                                    <span className="text-brand-600">{item.price.toLocaleString('hu-HU')} Ft</span>
-                                  </div>
-                                  <div className="flex justify-between font-semibold mt-1">
-                                    <span className="text-gray-600">Anyagszükséglet szerint:</span>
-                                    <span className="text-green-600">{Math.round(nettoPrice).toLocaleString('hu-HU')} Ft</span>
-                                  </div>
-                                </>
-                              )}
-                            </div>
+                            <PriceBreakdown
+                              variant="line"
+                              kiszerelesPrice={isPartner ? partnerItemPrice * discountMultiplier : item.price}
+                              anyagszuksegletPrice={isPartner ? nettoPrice * discountMultiplier : nettoPrice}
+                              partnerMode={isPartner}
+                            />
                           </div>
                         );
                       })}
@@ -2567,101 +2549,72 @@ export default function Calculator({ profile }: { profile?: { role?: string; par
                   <div className="mt-5 pt-5 border-t-2 border-gray-400">
                     <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
                       <span className="text-xl font-bold text-gray-800">VÉGÖSSZEG:</span>
-                      {isPartner ? (
-                        <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
-                          <div className="flex justify-between sm:block sm:text-right">
-                            <span className="text-xs text-gray-500 sm:block">Listaár</span>
-                            <span className="text-lg sm:text-xl font-bold text-gray-400 line-through">
-                              {(() => {
-                                let partnerTotal = 0;
-                                result.items.forEach((item, idx) => {
-                                  item.pkgs.forEach((pkg, i) => {
-                                    const key = `${idx}_${i}`;
-                                    const effectiveQty = partnerQtyOverrides[key] !== undefined ? partnerQtyOverrides[key] : (pkg.qty || 0);
-                                    partnerTotal += pkg.price * effectiveQty;
-                                  });
-                                });
-                                return partnerTotal.toLocaleString('hu-HU');
-                              })()} Ft
-                            </span>
-                          </div>
-                          <div className="flex justify-between sm:block sm:text-right">
-                            <span className="text-xs text-green-600 sm:block font-semibold">Partneri ár ({discountPercent}%)</span>
-                            <span className="text-lg sm:text-xl font-bold text-green-600">
-                              {(() => {
-                                let partnerTotal = 0;
-                                result.items.forEach((item, idx) => {
-                                  item.pkgs.forEach((pkg, i) => {
-                                    const key = `${idx}_${i}`;
-                                    const effectiveQty = partnerQtyOverrides[key] !== undefined ? partnerQtyOverrides[key] : (pkg.qty || 0);
-                                    partnerTotal += pkg.price * effectiveQty;
-                                  });
-                                });
-                                return Math.round(partnerTotal * discountMultiplier).toLocaleString('hu-HU');
-                              })()} Ft
-                            </span>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
-                          <div className="flex justify-between sm:block sm:text-right">
-                            <span className="text-xs text-gray-500 sm:block">Kiszerelés szerint</span>
-                            <span className="text-lg sm:text-xl font-bold text-brand-600">
-                              {result.total.toLocaleString('hu-HU')} Ft
-                            </span>
-                          </div>
-                          <div className="flex justify-between sm:block sm:text-right">
-                            <span className="text-xs text-gray-500 sm:block">Anyagszükséglet szerint</span>
-                            <span className="text-lg sm:text-xl font-bold text-green-600">
-                              {(() => {
-                                let totalLeftoverValue = 0;
-                                if (result.surfaceResults) {
-                                  const totalNeededMap: Record<string, number> = {};
-                                  result.surfaceResults.forEach((sr: any) => {
-                                    sr.items.forEach((srItem: any) => {
-                                      const name = srItem.cat.replace(' (1 réteg)', '').replace(' (2 réteg)', '');
-                                      if (!totalNeededMap[name]) totalNeededMap[name] = 0;
-                                      totalNeededMap[name] += srItem.needed;
-                                    });
-                                  });
-                                  
-                                  result.items.forEach((aggItem: any) => {
-                                    const catClean = aggItem.cat.replace(' (1 réteg)', '').replace(' (2 réteg)', '').replace(' (összesített)', '');
-                                    
-                                    let neededAmount = 0;
-                                    Object.entries(totalNeededMap).forEach(([name, amount]) => {
-                                      if (catClean.includes(name) || name.includes(catClean)) {
-                                        neededAmount = amount as number;
-                                      }
-                                    });
-                                    
-                                    let gotAmount = 0;
-                                    if (aggItem.pkgs && aggItem.pkgs.length > 0) {
-                                      aggItem.pkgs.forEach((pkg: any) => {
-                                        const pkgSize = pkg.liters || pkg.kg || pkg.m2 || 0;
-                                        gotAmount += pkgSize * (pkg.qty || 0);
-                                      });
-                                    }
-                                    
-                                    const leftover = gotAmount - neededAmount;
-                                    if (leftover > 0.01 && aggItem.pkgs.length > 0) {
-                                      const pkg = aggItem.pkgs[0];
-                                      const pkgSize = pkg.liters || pkg.kg || pkg.m2 || 1;
-                                      const unitPrice = pkg.price / pkgSize;
-                                      totalLeftoverValue += leftover * unitPrice;
-                                    }
-                                  });
-                                }
-                                return Math.round(result.total - totalLeftoverValue).toLocaleString('hu-HU');
-                              })()} Ft
-                            </span>
-                          </div>
-                        </div>
-                      )}
+                      {(() => {
+                        let partnerTotal = 0;
+                        result.items.forEach((item, idx) => {
+                          item.pkgs.forEach((pkg, i) => {
+                            const key = `${idx}_${i}`;
+                            const effectiveQty = partnerQtyOverrides[key] !== undefined ? partnerQtyOverrides[key] : (pkg.qty || 0);
+                            partnerTotal += pkg.price * effectiveQty;
+                          });
+                        });
+
+                        let totalLeftoverValue = 0;
+                        if (result.surfaceResults) {
+                          const totalNeededMap: Record<string, number> = {};
+                          result.surfaceResults.forEach((sr: any) => {
+                            sr.items.forEach((srItem: any) => {
+                              const name = srItem.cat.replace(' (1 réteg)', '').replace(' (2 réteg)', '');
+                              if (!totalNeededMap[name]) totalNeededMap[name] = 0;
+                              totalNeededMap[name] += srItem.needed;
+                            });
+                          });
+
+                          result.items.forEach((aggItem: any) => {
+                            const catClean = aggItem.cat.replace(' (1 réteg)', '').replace(' (2 réteg)', '').replace(' (összesített)', '');
+
+                            let neededAmount = 0;
+                            Object.entries(totalNeededMap).forEach(([name, amount]) => {
+                              if (catClean.includes(name) || name.includes(catClean)) {
+                                neededAmount = amount as number;
+                              }
+                            });
+
+                            let gotAmount = 0;
+                            if (aggItem.pkgs && aggItem.pkgs.length > 0) {
+                              aggItem.pkgs.forEach((pkg: any) => {
+                                const pkgSize = pkg.liters || pkg.kg || pkg.m2 || 0;
+                                gotAmount += pkgSize * (pkg.qty || 0);
+                              });
+                            }
+
+                            const leftover = gotAmount - neededAmount;
+                            if (leftover > 0.01 && aggItem.pkgs.length > 0) {
+                              const pkg = aggItem.pkgs[0];
+                              const pkgSize = pkg.liters || pkg.kg || pkg.m2 || 1;
+                              const unitPrice = pkg.price / pkgSize;
+                              totalLeftoverValue += leftover * unitPrice;
+                            }
+                          });
+                        }
+
+                        const baseAnyagszukseglet = result.total - totalLeftoverValue;
+                        const kiszerelesTotal = isPartner ? partnerTotal * discountMultiplier : result.total;
+                        const anyagszuksegletTotal = isPartner ? baseAnyagszukseglet * discountMultiplier : baseAnyagszukseglet;
+
+                        return (
+                          <PriceBreakdown
+                            variant="total"
+                            kiszerelesPrice={kiszerelesTotal}
+                            anyagszuksegletPrice={anyagszuksegletTotal}
+                            partnerMode={isPartner}
+                          />
+                        );
+                      })()}
                     </div>
                     <p className="text-xs text-gray-500 mt-2">
-                      {isPartner 
-                        ? 'Az árak tartalmazzák az ÁFÁ-t. Munkadíj nem szerepel a kalkulációban. A mennyiségek szerkeszthetők — ha van raktáron anyagod, csökkentsd a darabszámot.'
+                      {isPartner
+                        ? 'Az árak tartalmazzák az ÁFÁ-t. Munkadíj nem szerepel a kalkulációban. Az anyagszükséglet szerinti ár a maradék anyag értékének levonásával számolt. A mennyiségek szerkeszthetők — ha van raktáron anyagod, csökkentsd a darabszámot.'
                         : 'Az árak tartalmazzák az ÁFÁ-t. Munkadíj nem szerepel a kalkulációban. Az anyagszükséglet szerinti ár a maradék anyag értékének levonásával számolt.'
                       }
                     </p>
