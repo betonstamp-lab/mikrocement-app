@@ -17,8 +17,8 @@ export default function PriceBreakdown({
   partnerMode = false,
   showSinglePrice = false,
 }: PriceBreakdownProps) {
-  const kiszerelesLabel = partnerMode ? 'Partneri kiszerelés szerint' : 'Kiszerelés szerint';
-  const anyagszuksegletLabel = partnerMode ? 'Partneri anyagszükséglet szerint' : 'Anyagszükséglet szerint';
+  const kiszerelesLabel = 'Kiszerelés szerint';
+  const anyagszuksegletLabel = 'Anyagszükséglet szerint';
   const kiszerelesColor = partnerMode ? 'text-green-700' : 'text-brand-600';
 
   if (variant === 'line') {
